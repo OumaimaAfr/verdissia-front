@@ -455,9 +455,9 @@ p {
 .rounded-buttons .rounded-three {
   overflow: hidden;
   line-height: 52px;
-  background: -webkit-linear-gradient(left, #43cae9 0%, #38f9d7 50%, #43cae9 100%);
-  background: -o-linear-gradient(left, #43cae9 0%, #38f9d7 50%, #43cae9 100%);
-  background: linear-gradient(to right, #43cae9 0%, #38f9d7 50%, #43cae9 100%);
+  background: -webkit-linear-gradient(90deg, #00C853 0%, #00E5A8 50%, #00C853 100%);
+  background: -o-linear-gradient(90deg, #00C853 0%, #00E5A8 50%, #00C853 100%);
+  background: linear-gradient(90deg, #00C853 0%, #00E5A8 50%, #00C853 100%);
   background-size: 200% auto;
   color: #fff;
   border: 0;
@@ -599,6 +599,9 @@ p {
        3.HEADER css 
 ===========================*/
 /*===== NAVBAR EIGHT =====*/
+.header-area {
+  min-height: 94px;
+}
 .navbar-area {
   background: -webkit-linear-gradient(left, #43cae9 0%, #38f9d7 100%);
   background: -o-linear-gradient(left, #43cae9 0%, #38f9d7 100%);
@@ -2198,7 +2201,7 @@ p {
 ===========================*/
 .footer-area .footer-widget {
   padding-top: 90px;
-  padding-bottom: 120px; }
+  padding-bottom: 90px; }
   @media only screen and (min-width: 768px) and (max-width: 991px) {
     .footer-area .footer-widget {
       padding-top: 70px;
@@ -2288,4 +2291,129 @@ p {
     color: #121212;
     background-color: #38f9d7; }
 
-/*# sourceMappingURL=style.css.map */
+.not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form-container {
+  max-width: 1012px;
+  margin: 50px auto;
+  padding: 0 16px;
+
+  .form {
+    background: #fff;
+    border-radius: 14px;
+    padding: 24px;
+    border: 1px solid #EEF2F7;
+    box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 10px 30px rgba(2,6,23,.08);
+
+    .form-title {
+      margin-top: 40px;
+      margin-bottom: 50px;
+      text-align: center;
+    }
+
+    .ant-steps {
+      margin: 0 48px;
+    }
+
+    form {
+      max-width: 600px;
+      width: 100%;
+
+      label {
+        font-size: 16px;
+      }
+    }
+
+    &:hover {
+      box-shadow: 0 2px 6px rgba(16,24,40,.06), 0 14px 36px rgba(2,6,23,.12);
+      transform: translateY(-1px);
+      transition: transform 120ms ease, box-shadow 180ms ease;
+    }
+
+    .ant-steps-item-title {
+      font-weight: 700;
+    }
+  }
+}
+
+#main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.infos-perso-step, .infos-fourniture-step, .contrat-step {
+  margin: 50px 50px 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.description-step {
+  font-size: 18px;
+  text-align: center;
+  margin-bottom: 55px;
+}
+
+.ant-radio-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ant-picker {
+  width: 100%;
+}
+
+.ant-checkbox-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ant-form-item-label {
+  font-weight: 500;
+}
+
+.ant-form-item {
+  margin-bottom: 30px;
+}
+
+button[type="submit"] {
+  display: flex;
+  place-self: center;
+  margin-top: 52px;
+  padding: 18px;
+
+  &:focus {
+    outline: none;
+  }
+
+  span {
+    font-size: 16px;
+  }
+}
+
+.form-header-buttons {
+  display: flex;
+  justify-content: space-between;
+
+  button {
+    padding: 18px;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  .right-actions {
+    float: right;
+  }
+}

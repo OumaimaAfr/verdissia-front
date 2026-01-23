@@ -10,6 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.1.0",
+    "antd": "^6.2.0",
+    "axios": "^1.13.2",
+    "dayjs": "^1.11.19",
     "i18next": "^25.7.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
