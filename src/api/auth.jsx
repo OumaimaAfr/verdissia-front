@@ -4,13 +4,13 @@ export const encodeCredential = (text) => {
     }
 
     if (typeof btoa === 'function' && typeof TextEncoder === 'function') {
-        const encoder = new TextEncoder();              // UTF-8
-        const bytes = encoder.encode(text);             // Uint8Array
+        const encoder = new TextEncoder();
+        const bytes = encoder.encode(text);
         let binary = '';
         for (let i = 0; i < bytes.length; i++) {
             binary += String.fromCharCode(bytes[i]);
         }
-        return btoa(binary); // Base64
+        return btoa(binary);
     }
 
     if (typeof globalThis !== 'undefined' && globalThis.Buffer) {

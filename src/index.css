@@ -58,3 +58,11 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.offre-row.selected {
+  background: #43cae9;
+}
+
+.ant-steps-item-title {
+  max-width: 101px;
+}

@@ -61,7 +61,7 @@ function Footer(){
                         </div>
                         <div className="col-lg-2">
                             <div className="footer-logo text-center mt-10">
-                                <a href="index.html"><img src="/template-assets/images/logo-2.png" alt="Logo"/></a>
+                                <a href="index.html"><img src="/template-assets/images/logo.png" alt="Logo"/></a>
                             </div>
                         </div>
                         <div className="col-lg-5">

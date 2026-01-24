@@ -3,14 +3,12 @@ import { encodeCredential } from '../api/auth.jsx';
 
 export async function generateToken() {
     const payload = {
-        client_id: 'energy-contracts-front',
-        grant_type: 'password',
-        username: encodeCredential('client.user'),
-        password: encodeCredential('user'),
+        username: 'client',
+        password: encodeCredential('Cl13nt!Pwd_2026#Verd'),
     };
 
     const res = await http.request({
-        method: 'GET',
+        method: 'POST',
         url: '/generation-token',
         data: payload,
         headers: {
@@ -18,5 +16,5 @@ export async function generateToken() {
         },
     });
 
-    return res.data?.access_token || res.data;
+    return res.data?.accessToken;
 }

@@ -2320,7 +2320,7 @@ p {
     }
 
     form {
-      max-width: 600px;
+      max-width: 625px;
       width: 100%;
 
       label {
@@ -2347,7 +2347,7 @@ p {
   width: 100%;
 }
 
-.infos-perso-step, .infos-fourniture-step, .contrat-step {
+.infos-perso-step, .infos-fourniture-step, .offres-step, .contrat-step {
   margin: 50px 50px 30px;
   display: flex;
   flex-direction: column;
@@ -2415,5 +2415,102 @@ button[type="submit"] {
 
   .right-actions {
     float: right;
+  }
+}
+
+.offres-step {
+
+  .offres-list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .offre-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+
+    &.selected {
+      background: #38f9d7 !important;
+    }
+  }
+
+  .offre-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .offre-picto {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .offre-infos {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      max-width: 645px;
+
+      .offre-titre-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        .offre-titre {
+          font-weight: 600;
+          font-size: 16px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+
+      .offre-descirption {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+
+  .offre-prix-bloc {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .offre-prix {
+      font-weight: 600;
+      font-size: 18px;
+    }
+  }
+
+  .buttons-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    margin-top: 52px;
+
+    button {
+      padding: 18px;
+      outline: none;
+    }
+  }
+
+  .offre-row[role="checkbox"] {
+    transition: background-color 120ms ease, box-shadow 120ms ease;
+  }
+  .offre-row[role="checkbox"]:hover {
+    background: #f8fafc;
+  }
+  .offre-row.selected {
+    background: #fafafa;
   }
 }

@@ -1,28 +1,36 @@
 import React from "react";
-import {DatePicker, Form, Radio, Button, Input, Col, Row} from "antd";
+import {DatePicker, Form, Radio, Button, Input, Col, Row, Alert} from "antd";
 import dayjs from "dayjs";
 import { getOffres } from "../../../services/offresService.jsx";
 
 function InfosFournitureStep({ onFinish, initialValues, resetSignal }){
     const [form] = Form.useForm();
+    const [loading, setLoading] = React.useState(false);
+    const [errorMsg, setErrorMsg] = React.useState(null);
 
     React.useEffect(() => {
         form.resetFields();
+        setErrorMsg(null);
     }, [resetSignal, form]);
 
     const handleSubmit = async (values) => {
+        setErrorMsg(null);
+        setLoading(true);
         try {
             const payload = {
                 typeEnergie: values.typeEnergie || "",
                 preferenceOffre: values.preferenceOffre || "",
             };
 
-            const offres = await getOffres(payload);
-            console.log("Offres", offres);
-            onFinish(values);
+            const response = await getOffres(payload);
+            onFinish(values, response.data);
         } catch (e) {
             console.error(e);
+            setErrorMsg("Une erreur est survenue lors de la récupération des offres. Merci de réessayer plus tard.");
+        } finally {
+            setLoading(false);
         }
+
     };
 
     return (
@@ -101,9 +109,9 @@ function InfosFournitureStep({ onFinish, initialValues, resetSignal }){
                     rules={[{ required: true, message: "Veuillez choisir un type d’énergie" }]}
                 >
                     <Radio.Group>
-                        <Radio value="electricite">Électricité</Radio>
-                        <Radio value="gaz">Gaz</Radio>
-                        <Radio value="dual">Dual (Électricité + Gaz)</Radio>
+                        <Radio value="ELECTRICITE">Électricité</Radio>
+                        <Radio value="GAZ">Gaz</Radio>
+                        <Radio value="DUAL">Dual (Électricité + Gaz)</Radio>
                     </Radio.Group>
                 </Form.Item>
                 <Form.Item
@@ -134,14 +142,21 @@ function InfosFournitureStep({ onFinish, initialValues, resetSignal }){
                     ]}
                 >
                     <Radio.Group>
-                        <Radio value="prix">Prix</Radio>
-                        <Radio value="stabilite">Stabilité</Radio>
-                        <Radio value="energie_verte">Énergie verte</Radio>
-                        <Radio value="indifferent">Indifférent</Radio>
+                        <Radio value="PRIX">Prix</Radio>
+                        <Radio value="STABILITE">Stabilité</Radio>
+                        <Radio value="ENERGIE_VERTE">Énergie verte</Radio>
+                        <Radio value="INDIFFERENT">Indifférent</Radio>
                     </Radio.Group>
                 </Form.Item>
-                <Button type="primary" htmlType="submit">
-                    Soumettre
+                {errorMsg && (
+                    <Alert
+                        type="error"
+                        description={errorMsg}
+                        showIcon
+                    />
+                )}
+                <Button type="primary" htmlType="submit" loading={loading}>
+                    Continuer
                 </Button>
             </Form>
         </div>

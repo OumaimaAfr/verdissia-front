@@ -70,12 +70,12 @@ function InfosPersoStep({ onFinish, initialValues, resetSignal }){
                     rules={[
                         { required: true, message: 'Veuillez saisir votre numéro de téléphone' },
                         {
-                            pattern: /^[0-9+\s-]{8,20}$/,
+                            pattern: /^[0-9+\s-]{8,10}$/,
                             message: 'Veuillez saisir un numéro de téléphone valide',
                         },
                     ]}
                 >
-                    <Input placeholder="Ex. 06 12 34 56 78" inputMode="tel" />
+                    <Input placeholder="Ex. 0612345678" inputMode="tel" />
                 </Form.Item>
                 <Button type="primary" htmlType="submit">
                     Continuer

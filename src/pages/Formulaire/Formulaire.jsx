@@ -3,6 +3,7 @@ import {Button, Steps} from 'antd';
 import { LeftOutlined, ReloadOutlined } from '@ant-design/icons';
 import InfosPersoStep from "./steps/InfosPersoStep.jsx"
 import InfosFournitureStep from "./steps/InfosFournitureStep.jsx";
+import OffresStep from "./steps/OffresStep.jsx";
 import ContratStep from "./steps/ContratStep.jsx";
 import { AuthTokenContext, AuthTokenProvider } from "../../context/AuthTokenContext.jsx";
 
@@ -11,26 +12,33 @@ function FormulaireInner(){
     const [resetCounter, setResetCounter] = React.useState(0);
     const [infosPersoDetails, setInfosPersoDetails] = React.useState(null);
     const [infosFournitureDetails, setinfosFournitureDetails] = React.useState(null);
+    const [offres, setOffres] = React.useState(null);
+    const [selectedOffres, setSelectedOffres] = React.useState(null);
+
 
     const { refreshToken } = React.useContext(AuthTokenContext);
-
-    React.useEffect(() => {
-        refreshToken();
-    }, [refreshToken]);
 
     const onFinishInfosPersoStep = (values) => {
         setInfosPersoDetails(values);
         setCurrent(1);
     };
 
-    const onFinishInfosFournitureStep = (values) => {
+    const onFinishInfosFournitureStep = (values, offresArray) => {
         setinfosFournitureDetails(values);
+        setOffres(offresArray || []);
+        console.log("Offres", offres);
         setCurrent(2);
     }
+
+    const onValidateOffres = (selected) => {
+        setSelectedOffres(selected);
+        setCurrent(3);
+    };
 
     const steps = [
         <InfosPersoStep onFinish={onFinishInfosPersoStep} initialValues={infosPersoDetails} resetSignal={resetCounter}/>,
         <InfosFournitureStep onFinish={onFinishInfosFournitureStep} initialValues={infosFournitureDetails} resetSignal={resetCounter}/>,
+        <OffresStep offres={offres || []} onValidate={onValidateOffres}/>,
         <ContratStep />
     ]
 
@@ -42,7 +50,7 @@ function FormulaireInner(){
             return infosPersoDetails === null;
         }
         if (step === 2) {
-            return infosPersoDetails === null || infosFournitureDetails === null;
+            return infosPersoDetails === null || infosFournitureDetails === null || !Array.isArray(offres);
         }
     };
 
@@ -53,6 +61,8 @@ function FormulaireInner(){
     const handleResetAll = () => {
         setInfosPersoDetails(null);
         setinfosFournitureDetails(null);
+        setOffres(null);
+        setSelectedOffres(null);
         setCurrent(0);
         setResetCounter((n) => n + 1);
         refreshToken();
@@ -79,16 +89,20 @@ function FormulaireInner(){
                 <Steps current={current} onChange={setCurrent}
                        items={[
                            {
-                               title: 'informations personnelles',
+                               title: 'Informations personnelles',
                                disabled: isStepDisabled(0)
                            },
                            {
-                               title: 'informations de fourniture',
+                               title: 'Informations de fourniture',
                                disabled: isStepDisabled(1)
                            },
                            {
-                               title: 'Contrat',
+                               title: 'Offres',
                                disabled: isStepDisabled(2)
+                           },
+                           {
+                               title: 'Contrat',
+                               disabled: isStepDisabled(3)
                            }
                        ]}
                 />

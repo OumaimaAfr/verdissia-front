@@ -1,6 +1,6 @@
 import React from 'react';
-import { generateToken } from '../services/authService.jsx';
-import { setAuthToken } from '../api/httpClient.jsx';
+import { generateToken } from '../services/authService';
+import { setAuthToken } from '../api/httpClient';
 
 export const AuthTokenContext = React.createContext({
     token: null,
@@ -11,6 +11,8 @@ export const AuthTokenContext = React.createContext({
 export function AuthTokenProvider({ children }) {
     const [token, setToken] = React.useState(null);
     const [loadingToken, setLoadingToken] = React.useState(false);
+
+    const hasFetchedRef = React.useRef(false);
 
     const refreshToken = React.useCallback(async () => {
         try {
@@ -26,6 +28,12 @@ export function AuthTokenProvider({ children }) {
             setLoadingToken(false);
         }
     }, []);
+
+    React.useEffect(() => {
+        if (hasFetchedRef.current) return;
+        hasFetchedRef.current = true;
+        refreshToken();
+    }, [refreshToken]);
 
     const value = React.useMemo(
         () => ({ token, loadingToken, refreshToken }),
