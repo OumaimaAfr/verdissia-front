@@ -4,7 +4,7 @@ import NotFoundPage from "./pages/NotFoundPage.jsx";
 import Header from "./components/Header.jsx";
 import Formulaire from "./pages/Formulaire/Formulaire.jsx";
 import Footer from "./components/Footer.jsx";
-import {useEffect} from "react";
+import SignaturePage from "./pages/Signature/SignaturePage.jsx";
 
 
 function RootLayout() {
@@ -27,6 +27,7 @@ function App() {
                <Route element={<RootLayout />}>
                    <Route path="/" element={<HomePage />} />
                    <Route path="/souscription" element={<Formulaire />} />
+                   <Route path="/signature" element={<SignaturePage />} />
                    <Route path="*" element={<NotFoundPage />} />
                </Route>
            </Routes>
