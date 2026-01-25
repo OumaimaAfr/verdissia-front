@@ -68,6 +68,7 @@ function ConfirmationStep({infosPerso = {}, infosFourniture = {}, selectedOffre 
         }
 
         const payload = {
+            typeDemande: "souscription",
             informationsPersonnelles: {
                 referenceClient: infosPerso?.numeroCNI,
                 civilite: infosPerso?.civilite,
