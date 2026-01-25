@@ -4,6 +4,7 @@ import NotFoundPage from "./pages/NotFoundPage.jsx";
 import Header from "./components/Header.jsx";
 import Formulaire from "./pages/Formulaire/Formulaire.jsx";
 import Footer from "./components/Footer.jsx";
+import {useEffect} from "react";
 
 
 function RootLayout() {
@@ -19,7 +20,8 @@ function RootLayout() {
 }
 
 function App() {
-   return (
+
+    return (
        <main id="main" role="main" tabIndex={-1}>
            <Routes>
                <Route element={<RootLayout />}>

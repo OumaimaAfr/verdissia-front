@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Form, Input } from "antd";
+import {Button, Form, Input, Radio} from "antd";
 
 function InfosPersoStep({ onFinish, initialValues, resetSignal }){
     const [form] = Form.useForm();
@@ -12,6 +12,16 @@ function InfosPersoStep({ onFinish, initialValues, resetSignal }){
         <div className="infos-perso-step">
             <p className="description-step">Merci de renseigner vos coordonnées afin que nous puissions traiter votre demande.</p>
             <Form form={form} onFinish={onFinish} initialValues={initialValues} name="validateOnly" layout="vertical" autoComplete="off" requiredMark={false}>
+                <Form.Item
+                    name="civilite"
+                    label="Civilité"
+                    rules={[{ required: true, message: "La civilité est requise." }]}
+                >
+                    <Radio.Group>
+                        <Radio value="Monsieur">Monsieur</Radio>
+                        <Radio value="Madame">Madame</Radio>
+                    </Radio.Group>
+                </Form.Item>
                 <Form.Item
                     name="prenom"
                     label="Prénom"
@@ -70,12 +80,22 @@ function InfosPersoStep({ onFinish, initialValues, resetSignal }){
                     rules={[
                         { required: true, message: 'Veuillez saisir votre numéro de téléphone' },
                         {
-                            pattern: /^[0-9+\s-]{8,10}$/,
-                            message: 'Veuillez saisir un numéro de téléphone valide',
+                            pattern: /^\d{10}$/,
+                            message: 'Le numéro doit contenir exactement 10 chiffres',
                         },
                     ]}
                 >
-                    <Input placeholder="Ex. 0612345678" inputMode="tel" />
+                    <Input placeholder="Ex. 0612345678" inputMode="tel" maxLength={10}/>
+                </Form.Item>
+                <Form.Item
+                    name="numeroCNI"
+                    label="Numéro de carte d’identité nationale (CNI)"
+                    rules={[
+                        { required: true, message: "Le numéro de CNI est requis." },
+                        { pattern: /^[A-Z0-9]{12}$/, message: "Le numéro de CNI doit comporter 12 caractères alphanumériques (sans espaces)." },
+                    ]}
+                >
+                    <Input placeholder="Ex. XX1234567890" inputMode="text" maxLength={12} />
                 </Form.Item>
                 <Button type="primary" htmlType="submit">
                     Continuer

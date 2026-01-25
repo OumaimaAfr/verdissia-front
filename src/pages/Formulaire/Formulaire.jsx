@@ -4,7 +4,7 @@ import { LeftOutlined, ReloadOutlined } from '@ant-design/icons';
 import InfosPersoStep from "./steps/InfosPersoStep.jsx"
 import InfosFournitureStep from "./steps/InfosFournitureStep.jsx";
 import OffresStep from "./steps/OffresStep.jsx";
-import ContratStep from "./steps/ContratStep.jsx";
+import ConfirmationStep from "./steps/ConfirmationStep.jsx";
 import { AuthTokenContext, AuthTokenProvider } from "../../context/AuthTokenContext.jsx";
 
 function FormulaireInner(){
@@ -13,8 +13,8 @@ function FormulaireInner(){
     const [infosPersoDetails, setInfosPersoDetails] = React.useState(null);
     const [infosFournitureDetails, setinfosFournitureDetails] = React.useState(null);
     const [offres, setOffres] = React.useState(null);
-    const [selectedOffres, setSelectedOffres] = React.useState(null);
-
+    const [selectedOffre, setSelectedOffre] = React.useState(null);
+    const [isSubmitted, setIsSubmitted] = React.useState(false);
 
     const { refreshToken } = React.useContext(AuthTokenContext);
 
@@ -26,31 +26,43 @@ function FormulaireInner(){
     const onFinishInfosFournitureStep = (values, offresArray) => {
         setinfosFournitureDetails(values);
         setOffres(offresArray || []);
-        console.log("Offres", offres);
         setCurrent(2);
     }
 
-    const onValidateOffres = (selected) => {
-        setSelectedOffres(selected);
+    const onValidateOffres = (offre) => {
+        setSelectedOffre(offre);
         setCurrent(3);
     };
 
     const steps = [
         <InfosPersoStep onFinish={onFinishInfosPersoStep} initialValues={infosPersoDetails} resetSignal={resetCounter}/>,
         <InfosFournitureStep onFinish={onFinishInfosFournitureStep} initialValues={infosFournitureDetails} resetSignal={resetCounter}/>,
-        <OffresStep offres={offres || []} onValidate={onValidateOffres}/>,
-        <ContratStep />
+        <OffresStep offres={offres || []} onFinish={onValidateOffres} initialValues={{ selectedId: selectedOffre?.id }} resetSignal={resetCounter}/>,
+        <ConfirmationStep infosPerso={infosPersoDetails} infosFourniture={infosFournitureDetails} selectedOffre={selectedOffre} resetSignal={resetCounter} onSubmitted={(ok) => {if (ok) setIsSubmitted(true);}}/>
     ]
 
+
     const isStepDisabled = (step) => {
-        if (step === 0) {
-            return false;
-        }
-        if (step === 1) {
-            return infosPersoDetails === null;
-        }
-        if (step === 2) {
-            return infosPersoDetails === null || infosFournitureDetails === null || !Array.isArray(offres);
+        switch (step) {
+            case 0:
+                return false;
+            case 1:
+                return infosPersoDetails === null;
+            case 2:
+                return (
+                    infosPersoDetails === null ||
+                    infosFournitureDetails === null ||
+                    !Array.isArray(offres) ||
+                    offres.length === 0
+                );
+            case 3:
+                return (
+                    infosPersoDetails === null ||
+                    infosFournitureDetails === null ||
+                    selectedOffre === null
+                );
+            default:
+                return true;
         }
     };
 
@@ -62,9 +74,10 @@ function FormulaireInner(){
         setInfosPersoDetails(null);
         setinfosFournitureDetails(null);
         setOffres(null);
-        setSelectedOffres(null);
+        setSelectedOffre(null);
         setCurrent(0);
         setResetCounter((n) => n + 1);
+        setIsSubmitted(false);
         refreshToken();
     };
 
@@ -73,16 +86,18 @@ function FormulaireInner(){
             <div className="form">
                 <div className="form-header-buttons">
                     <div className="left-actions">
-                        {current >= 1 && (
+                        {current >= 1 && !isSubmitted && (
                             <Button type="primary" ghost icon={<LeftOutlined />} onClick={handleBack}>
                                 Retour
                             </Button>
                         )}
                     </div>
                     <div className="right-actions">
-                        <Button type="default" danger icon={<ReloadOutlined />} onClick={handleResetAll}>
-                            Réinitialiser
-                        </Button>
+                        {!isSubmitted && (
+                            <Button type="default" danger icon={<ReloadOutlined />} onClick={handleResetAll}>
+                                Réinitialiser
+                            </Button>
+                        )}
                     </div>
                 </div>
                 <h2 className="form-title">Souscrivez votre offre d'électricité en 5 min avec VERDISIA</h2>
@@ -101,7 +116,7 @@ function FormulaireInner(){
                                disabled: isStepDisabled(2)
                            },
                            {
-                               title: 'Contrat',
+                               title: 'Confirmation',
                                disabled: isStepDisabled(3)
                            }
                        ]}

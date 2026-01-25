@@ -1,16 +1,32 @@
 import React from "react";
-import {DatePicker, Form, Radio, Button, Input, Col, Row, Alert} from "antd";
+import {DatePicker, Form, Radio, Button, Input, Col, Row, Alert, Select} from "antd";
 import dayjs from "dayjs";
-import { getOffres } from "../../../services/offresService.jsx";
+import { getCommunesByCodePostal, getOffres } from "../../../services/appServices";
 
 function InfosFournitureStep({ onFinish, initialValues, resetSignal }){
     const [form] = Form.useForm();
     const [loading, setLoading] = React.useState(false);
     const [errorMsg, setErrorMsg] = React.useState(null);
 
+    const [villeOptions, setVilleOptions] = React.useState([]);
+    const [villeLocked, setVilleLocked] = React.useState(false);
+    const [cpLookupLoading, setCpLookupLoading] = React.useState(false);
+    const abortRef = React.useRef(null);
+    const cacheRef = React.useRef(new Map());
+
     React.useEffect(() => {
         form.resetFields();
         setErrorMsg(null);
+        resetVilleState();
+
+        const cpInit = (initialValues?.codePostal || "").replace(/\D/g, "");
+        if (/^\d{5}$/.test(cpInit)) {
+            lookupCommunes(cpInit);
+        }
+
+        return () => {
+            if (abortRef.current) abortRef.current.abort();
+        };
     }, [resetSignal, form]);
 
     const handleSubmit = async (values) => {
@@ -21,7 +37,6 @@ function InfosFournitureStep({ onFinish, initialValues, resetSignal }){
                 typeEnergie: values.typeEnergie || "",
                 preferenceOffre: values.preferenceOffre || "",
             };
-
             const response = await getOffres(payload);
             onFinish(values, response.data);
         } catch (e) {
@@ -30,7 +45,68 @@ function InfosFournitureStep({ onFinish, initialValues, resetSignal }){
         } finally {
             setLoading(false);
         }
+    };
 
+    const resetVilleState = () => {
+        setVilleOptions([]);
+        setVilleLocked(false);
+        setCpLookupLoading(false);
+    };
+
+    const lookupCommunes = async (cp) => {
+        if (abortRef.current) {
+            abortRef.current.abort();
+        }
+
+        const cached = cacheRef.current.get(cp);
+        if (cached) {
+            applyCommunesResult(cached);
+            return;
+        }
+
+        const controller = new AbortController();
+        abortRef.current = controller;
+
+        setCpLookupLoading(true);
+        try {
+            const communes = await getCommunesByCodePostal(cp, controller.signal);
+            cacheRef.current.set(cp, communes);
+            applyCommunesResult(communes);
+        } catch (e) {
+            if (e.name === "CanceledError" || e.name === "AbortError") {
+                return;
+            }
+            console.error(e);
+            resetVilleState();
+        } finally {
+            setCpLookupLoading(false);
+        }
+    };
+
+    const applyCommunesResult = (communes) => {
+        if (!Array.isArray(communes) || communes.length === 0) {
+            resetVilleState();
+            form.setFieldsValue({ ville: undefined });
+            return;
+        }
+
+        if (communes.length === 1) {
+            const ville = communes[0]?.nom || "";
+            setVilleOptions([]);
+            setVilleLocked(true);
+            form.setFieldsValue({ ville });
+        } else {
+            const options = communes
+                .map((c) => ({ label: c.nom, value: c.nom }))
+                .sort((a, b) => a.label.localeCompare(b.label, "fr"));
+            setVilleOptions(options);
+            setVilleLocked(false);
+
+            const currentVille = form.getFieldValue("ville");
+            if (!options.some((o) => o.value === currentVille)) {
+                form.setFieldsValue({ ville: undefined });
+            }
+        }
     };
 
     return (
@@ -64,19 +140,26 @@ function InfosFournitureStep({ onFinish, initialValues, resetSignal }){
                             label="Code postal"
                             rules={[
                                 { required: true, message: "Le code postal est requis." },
-                                {
-                                    pattern: /^[0-9]{4,5}$/,
-                                    message: "Veuillez saisir un code postal valide.",
-                                },
+                                { pattern: /^\d{5}$/, message: "Veuillez saisir un code postal français à 5 chiffres." },
                             ]}
                         >
                             <Input
                                 placeholder="Ex. 75001"
                                 inputMode="numeric"
                                 maxLength={5}
+                                onBlur={(e) => {
+                                    const cp = (e.target.value || '').replace(/\D/g, '');
+                                    if (/^\d{5}$/.test(cp)) {
+                                        lookupCommunes(cp); // même fonction que précédemment
+                                    } else {
+                                        resetVilleState();
+                                        form.setFieldsValue({ ville: undefined });
+                                    }
+                                }}
                             />
                         </Form.Item>
                     </Col>
+
                     <Col xs={24} md={12}>
                         <Form.Item
                             name="ville"
@@ -95,11 +178,23 @@ function InfosFournitureStep({ onFinish, initialValues, resetSignal }){
                                             : Promise.resolve(),
                                 },
                             ]}
-                            normalize={(v) =>
-                                typeof v === "string" ? v.replace(/\s+/g, " ").trimStart() : v
-                            }
+                            normalize={(v) => (typeof v === "string" ? v.replace(/\s+/g, " ").trimStart() : v)}
                         >
-                            <Input placeholder="Ex. Paris" />
+                            {villeLocked ? (
+                                <Input disabled placeholder="Ville auto" />
+                            ) : villeOptions.length > 0 ? (
+                                <Select
+                                    showSearch
+                                    placeholder="Sélectionnez la ville"
+                                    options={villeOptions}
+                                    loading={cpLookupLoading}
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+                                    }
+                                />
+                            ) : (
+                                <Input placeholder="Ex. Paris" />
+                            )}
                         </Form.Item>
                     </Col>
                 </Row>
