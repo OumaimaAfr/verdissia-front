@@ -14,7 +14,7 @@ export async function initSignature(token, signal) {
 export async function submitSignature(payload, signal) {
     const res = await http.request({
         method: 'POST',
-        url: '/signature',
+        url: '/signature/confirm',
         data: payload,
         signal,
         headers: { 'Content-Type': 'application/json' },

@@ -100,8 +100,8 @@ function FormulaireInner(){
                         )}
                     </div>
                 </div>
-                <h2 className="form-title">Souscrivez votre offre d'électricité en 5 min avec VERDISIA</h2>
-                <Steps current={current} onChange={setCurrent}
+                {!isSubmitted && <h2 className="form-title">Souscrivez votre offre d'électricité en 5 min avec VERDISIA</h2>}
+                {!isSubmitted && <Steps current={current} onChange={setCurrent}
                        items={[
                            {
                                title: 'Informations personnelles',
@@ -120,7 +120,7 @@ function FormulaireInner(){
                                disabled: isStepDisabled(3)
                            }
                        ]}
-                />
+                />}
                 {steps[current]}
             </div>
         </section>

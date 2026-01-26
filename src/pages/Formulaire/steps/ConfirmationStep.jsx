@@ -1,5 +1,5 @@
 import React from "react";
-import { Alert, Button, Checkbox, Descriptions } from "antd";
+import {Alert, Button, Checkbox, Descriptions, Input} from "antd";
 import { CheckCircleTwoTone } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { soumettreDemande } from "../../../services/appServices";
@@ -38,6 +38,8 @@ function ConfirmationStep({infosPerso = {}, infosFourniture = {}, selectedOffre 
     const [loading, setLoading] = React.useState(false);
     const [errorMsg, setErrorMsg] = React.useState(null);
     const [submitted, setSubmitted] = React.useState(false);
+    const [iban, setIban] = React.useState("");
+    const [ibanError, setIbanError] = React.useState(null);
 
     const abortRef = React.useRef(null);
 
@@ -47,6 +49,8 @@ function ConfirmationStep({infosPerso = {}, infosFourniture = {}, selectedOffre 
         if (lastResetRef.current !== resetSignal) {
             setConsentRGPD(false);
             setConsentCGV(false);
+            setIban("");
+            setIbanError(null);
             setLoading(false);
             setErrorMsg(null);
             setSubmitted(false);
@@ -59,8 +63,36 @@ function ConfirmationStep({infosPerso = {}, infosFourniture = {}, selectedOffre 
 
     const prenom = infosPerso?.prenom;
 
+    const normalizeIban = (v = "") => v.toUpperCase().replace(/\s+/g, "");
+
+    const handleIbanChange = (e) => {
+        let value = e.target.value.toUpperCase().replace(/\s+/g, "");
+        if (value.length > 27) value = value.slice(0, 27);
+        setIban(value);
+
+        if (!value) setIbanError("L’IBAN est requis.");
+        else if (!value.startsWith("FR")) setIbanError("L’IBAN doit commencer par FR.");
+        else if (value.length < 27) setIbanError("L’IBAN est incomplet (27 caractères requis).");
+        else setIbanError(null);
+    };
+
     const handleSubmit = async () => {
         setErrorMsg(null);
+
+        const normalizedIban = normalizeIban(iban);
+        if (!normalizedIban) {
+            setIbanError("L’IBAN est requis.");
+            return;
+        }
+        if (!normalizedIban.startsWith("FR")) {
+            setIbanError("L’IBAN doit commencer par FR.");
+            return;
+        }
+        if (normalizedIban.length !== 27) {
+            setIbanError("L’IBAN doit contenir exactement 27 caractères.");
+            return;
+        }
+        setIbanError(null);
 
         if (!consentRGPD || !consentCGV) {
             setErrorMsg("Vous devez accepter les deux consentements pour poursuivre.");
@@ -87,6 +119,7 @@ function ConfirmationStep({infosPerso = {}, infosFourniture = {}, selectedOffre 
                 offre: selectedOffre.id,
             },
             consentementClient: Boolean(consentRGPD && consentCGV),
+            iban: normalizedIban
         };
 
         try {
@@ -149,6 +182,22 @@ function ConfirmationStep({infosPerso = {}, infosFourniture = {}, selectedOffre 
                         </div>
                     </Descriptions.Item>
                 </Descriptions>
+            </div>
+
+            <div className="iban-block">
+                <label>IBAN pour le paiement</label>
+                <Input
+                    placeholder="Ex : FR76XXXXXXXXXXXXXXX"
+                    value={iban}
+                    onChange={handleIbanChange}
+                    maxLength={27}
+                    status={ibanError ? "error" : ""}
+                    autoComplete="off"
+                    inputMode="text"
+                />
+                {ibanError && (
+                    <div className="iban-error">{ibanError}</div>
+                )}
             </div>
 
             <div className="consentement">

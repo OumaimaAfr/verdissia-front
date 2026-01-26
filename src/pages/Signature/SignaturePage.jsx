@@ -5,7 +5,7 @@ import { CheckCircleTwoTone } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { initSignature, submitSignature } from "../../services/signatureService";
 
-const { Title, Paragraph, Text } = Typography;
+const { Paragraph, Text } = Typography;
 
 function useQuery() {
     const { search } = useLocation();
@@ -18,10 +18,12 @@ function formatDateFR(value) {
     return d.isValid() ? d.format("DD/MM/YYYY") : String(value);
 }
 
-function SignaturePad({ onClear }) {
+function SignaturePad({ onChange, onClear }, ref) {
     const canvasRef = React.useRef(null);
     const drawingRef = React.useRef(false);
     const lastPosRef = React.useRef({ x: 0, y: 0 });
+    const hasInkRef = React.useRef(false);
+    const blankDataUrlRef = React.useRef(null);
 
     React.useEffect(() => {
         const canvas = canvasRef.current;
@@ -44,12 +46,16 @@ function SignaturePad({ onClear }) {
             ctx.strokeStyle = "#333";
             ctx.fillStyle = "#fff";
             ctx.fillRect(0, 0, width, height);
+
+            hasInkRef.current = false;
+            blankDataUrlRef.current = canvas.toDataURL();
+            onChange?.(false);
         };
 
         resize();
         window.addEventListener("resize", resize);
         return () => window.removeEventListener("resize", resize);
-    }, []);
+    }, [onChange]);
 
     const getPos = (e) => {
         const canvas = canvasRef.current;
@@ -76,6 +82,11 @@ function SignaturePad({ onClear }) {
         ctx.lineTo(pos.x, pos.y);
         ctx.stroke();
         lastPosRef.current = pos;
+
+        if (!hasInkRef.current) {
+            hasInkRef.current = true;
+            onChange?.(true);
+        }
     };
     const handleEnd = (e) => {
         e.preventDefault();
@@ -87,8 +98,19 @@ function SignaturePad({ onClear }) {
         const ctx = canvas.getContext("2d");
         ctx.fillStyle = "#fff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        hasInkRef.current = false;
+        onChange?.(false);
         onClear?.();
     };
+
+    React.useImperativeHandle(ref, () => ({
+        isEmpty: () => !hasInkRef.current,
+        toDataURL: (type = "image/png", quality) => {
+            const canvas = canvasRef.current;
+            return canvas?.toDataURL(type, quality);
+        },
+        clear: clearCanvas
+    }));
 
     return (
         <div className="signature-canvas-container">
@@ -104,7 +126,7 @@ function SignaturePad({ onClear }) {
                 onTouchEnd={handleEnd}
             />
             <div className="signature-actions">
-                <Button onClick={clearCanvas}>Effacer la signature</Button>
+                <Button type="primary" ghost htmlType="submit" onClick={clearCanvas}>Effacer la signature</Button>
             </div>
         </div>
     );
@@ -116,6 +138,7 @@ function SignaturePage() {
 
     const [loading, setLoading] = React.useState(true);
     const [errorMsg, setErrorMsg] = React.useState(null);
+    const [errorMsgSoumission, setErrorMsgSoumission] = React.useState(null);
     const [submitted, setSubmitted] = React.useState(false);
 
     const [prenom, setPrenom] = React.useState("");
@@ -124,6 +147,8 @@ function SignaturePage() {
     const [offre, setOffre] = React.useState(null);
     const [adresse, setAdresse] = React.useState("");
     const [idDemande, setIdDemande] = React.useState(null);
+    const [hasSignature, setHasSignature] = React.useState(false);
+    const sigRef = React.useRef(null);
 
     const [statutSignature, setStatutSignature] = React.useState("SIGNE");
 
@@ -141,23 +166,23 @@ function SignaturePage() {
             try {
                 setLoading(true);
                 setErrorMsg(null);
-                const data = await initSignature(token, controller.signal);
+                setErrorMsgSoumission(null);
+                const response = await initSignature(token, controller.signal);
 
-                if (!data || data.status !== "OK") {
-                    setErrorMsg(data?.message || "Lien de signature invalide ou expiré.");
+                if (!response || response.status !== "OK") {
+                    setErrorMsg(response?.message || "Lien de signature invalide ou expiré.");
                     return;
                 }
 
-                setPrenom(data.prenom || "");
-                setNom(data.nom || "");
-                setDateMiseEnService(data.dateMiseEnService || "");
-                setOffre(data.offre || null);
-                setAdresse(data.adresse || "");
-                setIdDemande(data.idDemande ?? null);
+                setPrenom(response.data.prenom || "");
+                setNom(response.data.nom || "");
+                setDateMiseEnService(response.data.dateMiseEnService || "");
+                setOffre(response.data.offre || null);
+                setAdresse(response.data.adresse || "");
+                setIdDemande(response.data.idDemande ?? null);
             } catch (e) {
                 if (e.name === "AbortError" || e.name === "CanceledError") return;
-                console.error(e);
-                setErrorMsg("Une erreur est survenue lors du chargement de la page de signature.");
+                setErrorMsg(e.response.data.error.message || "Une erreur est survenue lors du chargement de la page de signature.");
             } finally {
                 setLoading(false);
             }
@@ -167,12 +192,18 @@ function SignaturePage() {
 
     const handleSubmit = async () => {
         if (!idDemande) {
-            setErrorMsg("Identifiant de demande introuvable. Merci de réessayer via le lien reçu.");
+            setErrorMsgSoumission("Identifiant de demande introuvable. Merci de réessayer via le lien reçu.");
+            return;
+        }
+
+        if (!hasSignature || sigRef.current?.isEmpty()) {
+            setErrorMsgSoumission("Veuillez signer dans l’encart prévu avant de finaliser.");
             return;
         }
         try {
             setLoading(true);
             setErrorMsg(null);
+            setErrorMsgSoumission(null);
             const controller = new AbortController();
             abortRef.current = controller;
 
@@ -182,7 +213,7 @@ function SignaturePage() {
         } catch (e) {
             if (e.name === "AbortError" || e.name === "CanceledError") return;
             console.error(e);
-            setErrorMsg("La validation de votre signature a échoué. Merci de réessayer.");
+            setErrorMsgSoumission("La validation de votre signature a échoué. Merci de réessayer.");
         } finally {
             setLoading(false);
         }
@@ -203,13 +234,13 @@ function SignaturePage() {
             <div className="signature-page">
                 <div className="signature-success">
                     <CheckCircleTwoTone twoToneColor="#52c41a" className="success-icon" />
-                    <Title level={3} className="success-title">
+                    <h3 className="success-title">
                         Merci {prenom || ""} !
-                    </Title>
-                    <Paragraph className="success-text">
+                    </h3>
+                    <div className="success-text">
                         Votre signature a bien été enregistrée. Nous vous remercions pour votre confiance.
                         Un e‑mail de confirmation vous a été adressé. Vous pouvez fermer cette page en toute sécurité.
-                    </Paragraph>
+                    </div>
                 </div>
             </div>
         );
@@ -221,16 +252,14 @@ function SignaturePage() {
                 <h3 className="signature-titre">Signature de votre contrat</h3>
 
                 {errorMsg ? (
-                    <Alert type="error" showIcon className="signature-alert" description={errorMsg} />
+                    <Alert type="error" showIcon className="signature-alert" description={errorMsg} style={{ marginBottom: 0}} />
                 ) : (
                     <>
                         <Paragraph className="signature-intro">
-                            Bonjour <Text strong>{prenom} {nom}</Text>,<br />
-                            Votre mise en service est prévue le <Text strong>{formatDateFR(dateMiseEnService)}</Text> à l’adresse :
+                            Bonjour <strong>{prenom} {nom}</strong>,<br />
+                            Votre mise en service est prévue le <strong>{formatDateFR(dateMiseEnService)}</strong> à l’adresse :    <strong>{adresse}</strong>.
                             <br />
-                            <Text strong>{adresse}</Text>.
-                            <br />
-                            Offre retenue : <Text strong>{offre?.libelle}</Text> — {Number(offre?.prix ?? 0).toFixed(2)} €.
+                            Offre retenue : <strong>{offre?.libelle}</strong> — {Number(offre?.prix ?? 0).toFixed(2)} €.
                         </Paragraph>
 
                         <Descriptions
@@ -254,31 +283,16 @@ function SignaturePage() {
                             <div className="signature-block-header">
                                 <Text>Veuillez signer ci‑dessous pour confirmer votre accord.</Text>
                             </div>
-                            <SignaturePad />
+                            <SignaturePad ref={sigRef} onChange={setHasSignature} />
                         </div>
 
-                        <div className="signature-status">
-                            <Radio.Group
-                                value={statutSignature}
-                                onChange={(e) => setStatutSignature(e.target.value)}
-                            >
-                                <Radio value="SIGNE">Je signe et j’accepte</Radio>
-                                <Radio value="REFUSE">Je refuse</Radio>
-                            </Radio.Group>
-                        </div>
-
-                        {errorMsg && (
-                            <Alert type="error" showIcon className="signature-alert" description={errorMsg} />
+                        {errorMsgSoumission && (
+                            <Alert type="error" showIcon className="signature-alert" description={errorMsgSoumission} />
                         )}
 
                         <div className="signature-actions-row">
-                            <Button
-                                type="primary"
-                                size="large"
-                                onClick={handleSubmit}
-                                loading={loading}
-                            >
-                                {statutSignature === "REFUSE" ? "Refuser" : "Signer et finaliser"}
+                            <Button type="primary" htmlType="submit" onClick={handleSubmit} loading={loading}>
+                                Signer et finaliser
                             </Button>
                         </div>
                     </>
