@@ -7,7 +7,7 @@ function Sidebar(){
                 </div>
                 <div className="sidebar-content">
                     <div className="sidebar-logo text-center">
-                        <a href="#"><img src="/template-assets/images/logo.png" alt="Logo"/></a>
+                        <a href="#"><img src="/template-assets/images/logo-new.png" alt="Logo"/></a>
                     </div>
                     <div className="sidebar-menu">
                         <ul>

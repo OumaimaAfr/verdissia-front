@@ -2781,7 +2781,7 @@ button[type="submit"] {
   }
 
   .backoffice-header {
-    background: #7dfaf0;
+    background: #38f9d7;
     border-bottom: 1px solid black;
 
     .ant-avatar {
@@ -2816,7 +2816,7 @@ button[type="submit"] {
     }
 
     .ant-card {
-      background: #7dfaf0;
+      background: #38f9d7;
       border: 1px solid black;
 
       .ant-statistic-title{

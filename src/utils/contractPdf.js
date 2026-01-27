@@ -73,10 +73,6 @@ export function openAndDownloadContract(record, options = {}) {
             ['Offre', [textOrDash(offre), libelleOffre ? `(${libelleOffre})` : ''].join(' ').trim()],
             ['Prix mensuel estimé (€ TTC)', (prix != null ? Number(prix).toFixed(2) : '—')],
             ['Date mise en service (prévue)', textOrDash(dateMiseEnService)],
-            ['Décision IA', textOrDash(decision)],
-            ['Score de confiance IA', (confidence ?? '—')],
-            ['Motif (analyse IA)', textOrDash(motifMessage)],
-            ['Détails (analyse IA)', textOrDash(details)],
         ],
     });
 

@@ -25,7 +25,7 @@ function Header() {
                         <div className="col-lg-12">
                             <nav className="navbar navbar-expand-lg">
                                 <Link className="navbar-brand" to="/">
-                                    <img src="/template-assets/images/logo.png" alt="Logo" />
+                                    <img src="/template-assets/images/logo-new.png" alt="Logo" />
                                 </Link>
 
                                 <button

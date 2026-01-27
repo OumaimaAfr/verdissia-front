@@ -21,8 +21,13 @@ export function computeBuckets(contracts = []) {
         if (wf?.state === STATES.EXAMINER)        { examiner.push({ ...c, ...wf }); continue; }
         if (wf?.state === STATES.DECLINED)        { declined.push({ ...c, ...wf }); continue; }
 
-        if (c.decision === 'VALIDE') toCreate.push(c);
-        else                         blocked.push(c);
+        if (c.actionConseiller === 'TRAITER') {
+            toCreate.push(c);
+        } else if (c.actionConseiller === 'VÉRIFICATION_OBLIGATOIRE' || c.actionConseiller === 'EXAMINER') {
+            examiner.push(c);
+        } else {
+            blocked.push(c);
+        }
     }
 
     return { toCreate, blocked, calls, examiner, declined };
