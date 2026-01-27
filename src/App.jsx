@@ -9,7 +9,6 @@ import { ProtectedRoute } from "./ProtectedRoute.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import BackofficeLayout from "./pages/BackofficeLayout.jsx";
 import ContratsPage from "./pages/ContratsPage.jsx";
-import ReviewPage from "./pages/ReviewPage.jsx";
 import ClientsCallPage from "./pages/ClientsCallPage.jsx";
 import BlockedPage from "./pages/BlockedPage";
 import DeclinedPage from "./pages/DeclinedPage";

@@ -2485,7 +2485,7 @@ button[type="submit"] {
       display: flex;
       flex-direction: column;
       gap: 7px;
-      max-width: 645px;
+      max-width: 550px;
 
       .offre-titre-header {
         display: flex;

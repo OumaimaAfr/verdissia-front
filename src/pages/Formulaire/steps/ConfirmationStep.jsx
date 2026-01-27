@@ -35,6 +35,7 @@ function mapPreference(v) {
 function ConfirmationStep({infosPerso = {}, infosFourniture = {}, selectedOffre = null, resetSignal, onSubmitted}) {
     const [consentRGPD, setConsentRGPD] = React.useState(false);
     const [consentCGV, setConsentCGV] = React.useState(false);
+    const [consentIBAN, setConsentIBAN] = React.useState(false);
     const [loading, setLoading] = React.useState(false);
     const [errorMsg, setErrorMsg] = React.useState(null);
     const [submitted, setSubmitted] = React.useState(false);
@@ -49,6 +50,7 @@ function ConfirmationStep({infosPerso = {}, infosFourniture = {}, selectedOffre 
         if (lastResetRef.current !== resetSignal) {
             setConsentRGPD(false);
             setConsentCGV(false);
+            setConsentIBAN(false);
             setIban("");
             setIbanError(null);
             setLoading(false);
@@ -94,7 +96,7 @@ function ConfirmationStep({infosPerso = {}, infosFourniture = {}, selectedOffre 
         }
         setIbanError(null);
 
-        if (!consentRGPD || !consentCGV) {
+        if (!consentRGPD || !consentCGV || !consentIBAN) {
             setErrorMsg("Vous devez accepter les deux consentements pour poursuivre.");
             return;
         }
@@ -118,7 +120,7 @@ function ConfirmationStep({infosPerso = {}, infosFourniture = {}, selectedOffre 
                 preferenceOffre: infosFourniture?.preferenceOffre,
                 offre: selectedOffre.id,
             },
-            consentementClient: Boolean(consentRGPD && consentCGV),
+            consentementClient: Boolean(consentRGPD && consentCGV && consentIBAN),
             iban: normalizedIban
         };
 
@@ -200,7 +202,10 @@ function ConfirmationStep({infosPerso = {}, infosFourniture = {}, selectedOffre 
                 )}
             </div>
 
-            <div className="consentement">
+            <div className="consentement">J’accepte le prélèvement mensuel automatique par
+                <Checkbox checked={consentIBAN} onChange={(e) => setConsentIBAN(e.target.checked)}>
+                    J’accepte le prélèvement mensuel automatique par VERDISSIA.
+                </Checkbox>
                 <Checkbox checked={consentRGPD} onChange={(e) => setConsentRGPD(e.target.checked)}>
                     J’accepte que mes données personnelles soient traitées par VERDISSIA aux fins de gestion de
                     ma demande.
