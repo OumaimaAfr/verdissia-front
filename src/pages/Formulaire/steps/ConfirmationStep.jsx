@@ -97,7 +97,7 @@ function ConfirmationStep({infosPerso = {}, infosFourniture = {}, selectedOffre 
         setIbanError(null);
 
         if (!consentRGPD || !consentCGV || !consentIBAN) {
-            setErrorMsg("Vous devez accepter les deux consentements pour poursuivre.");
+            setErrorMsg("Vous devez accepter les trois consentements pour poursuivre.");
             return;
         }
 
@@ -202,7 +202,7 @@ function ConfirmationStep({infosPerso = {}, infosFourniture = {}, selectedOffre 
                 )}
             </div>
 
-            <div className="consentement">J’accepte le prélèvement mensuel automatique par
+            <div className="consentement">
                 <Checkbox checked={consentIBAN} onChange={(e) => setConsentIBAN(e.target.checked)}>
                     J’accepte le prélèvement mensuel automatique par VERDISSIA.
                 </Checkbox>
