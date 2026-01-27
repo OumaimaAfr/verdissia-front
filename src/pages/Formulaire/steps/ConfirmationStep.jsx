@@ -176,7 +176,7 @@ function ConfirmationStep({infosPerso = {}, infosFourniture = {}, selectedOffre 
                     <Descriptions.Item label="Offre choisie">
                         <div>
                             <div>
-                                {selectedOffre.libelle} — {selectedOffre.prix.toFixed(2)} €
+                                {selectedOffre.libelle} — {selectedOffre.prix.toFixed(2)} € / Mois
                             </div>
                             <div>{selectedOffre.description}</div>
                         </div>

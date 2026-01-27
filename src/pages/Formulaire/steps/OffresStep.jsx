@@ -65,7 +65,7 @@ function OffresStep({ offres = [], onFinish, initialValues, resetSignal }) {
                                 </div>
                             </div>
                             <div className="offre-prix-bloc">
-                                <div className="offre-prix">{prix.toFixed(2)} €</div>
+                                <div className="offre-prix">{prix.toFixed(2)} € / Mois</div>
                                 <Radio
                                     checked={isSelected}
                                     onChange={() => {

@@ -71,7 +71,7 @@ export function openAndDownloadContract(record, options = {}) {
         body: [
             ['Type d’énergie', textOrDash(typeEnergie)],
             ['Offre', [textOrDash(offre), libelleOffre ? `(${libelleOffre})` : ''].join(' ').trim()],
-            ['Prix mensuel estimé (€ TTC)', (prix != null ? Number(prix).toFixed(2) : '—')],
+            ['Prix mensuel estimé (€ TTC / Mois)', (prix != null ? Number(prix).toFixed(2) : '—')],
             ['Date mise en service (prévue)', textOrDash(dateMiseEnService)],
         ],
     });

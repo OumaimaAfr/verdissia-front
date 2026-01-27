@@ -259,7 +259,7 @@ function SignaturePage() {
                             Bonjour <strong>{prenom} {nom}</strong>,<br />
                             Votre mise en service est prévue le <strong>{formatDateFR(dateMiseEnService)}</strong> à l’adresse :    <strong>{adresse}</strong>.
                             <br />
-                            Offre retenue : <strong>{offre?.libelle}</strong> — {Number(offre?.prix ?? 0).toFixed(2)} €.
+                            Offre retenue : <strong>{offre?.libelle}</strong> — {Number(offre?.prix ?? 0).toFixed(2)} € / Mois.
                         </Paragraph>
 
                         <Descriptions
@@ -274,7 +274,7 @@ function SignaturePage() {
                             <Descriptions.Item label="Date de mise en service">{formatDateFR(dateMiseEnService)}</Descriptions.Item>
                             <Descriptions.Item label="Adresse">{adresse}</Descriptions.Item>
                             <Descriptions.Item label="Offre">
-                                {offre?.libelle} — {Number(offre?.prix ?? 0).toFixed(2)} €
+                                {offre?.libelle} — {Number(offre?.prix ?? 0).toFixed(2)} € / Mois
                             </Descriptions.Item>
                             <Descriptions.Item label="Identifiant de demande">{idDemande ?? "-"}</Descriptions.Item>
                         </Descriptions>
