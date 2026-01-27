@@ -10,11 +10,11 @@ function textOrDash(v) { return (v ?? '') === '' || v === null ? '—' : String(
 export function openAndDownloadContract(record, options = {}) {
     const {
         provider = {
-            name: 'Verdisia Énergie',
+            name: 'Verdissia Énergie',
             siret: 'SIRET 123 456 789 00012',
             address: '10 Rue de l’Énergie, 75000 Paris',
             phone: '+33 1 23 45 67 89',
-            email: 'support@verdisia.com',
+            email: 'support@verdissia.com',
         },
         footerNote = 'Document généré électroniquement. Toute reproduction totale ou partielle est interdite sans accord préalable.',
     } = options;

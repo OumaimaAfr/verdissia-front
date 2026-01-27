@@ -202,11 +202,11 @@ function ConfirmationStep({infosPerso = {}, infosFourniture = {}, selectedOffre 
 
             <div className="consentement">
                 <Checkbox checked={consentRGPD} onChange={(e) => setConsentRGPD(e.target.checked)}>
-                    J’accepte que mes données personnelles soient traitées par VERDISIA aux fins de gestion de
+                    J’accepte que mes données personnelles soient traitées par VERDISSIA aux fins de gestion de
                     ma demande.
                 </Checkbox>
                 <Checkbox checked={consentCGV} onChange={(e) => setConsentCGV(e.target.checked)}>
-                    J’ai lu et j’accepte les <strong>Conditions Générales de Vente</strong> de VERDISIA et je confirme l’exactitude des informations renseignées.
+                    J’ai lu et j’accepte les <strong>Conditions Générales de Vente</strong> de VERDISSIA et je confirme l’exactitude des informations renseignées.
                 </Checkbox>
             </div>
 

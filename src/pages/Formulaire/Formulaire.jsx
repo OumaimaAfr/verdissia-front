@@ -100,7 +100,7 @@ function FormulaireInner(){
                         )}
                     </div>
                 </div>
-                {!isSubmitted && <h2 className="form-title">Souscrivez votre offre d'électricité en 5 min avec VERDISIA</h2>}
+                {!isSubmitted && <h2 className="form-title">Souscrivez votre offre d'électricité en 5 min avec VERDISSIA</h2>}
                 {!isSubmitted && <Steps current={current} onChange={setCurrent}
                        items={[
                            {
