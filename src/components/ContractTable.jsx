@@ -179,15 +179,15 @@ export default function ContractTable({
                             <Button icon={<EyeOutlined />} onClick={() => openDrawer(record)}>
                                 Voir
                             </Button>
-                            <Button icon={<FileSearchOutlined />} onClick={() => {
+                            <Button variant="solid" color="cyan" icon={<FileSearchOutlined />} onClick={() => {
                                 moveToExaminer(record);
                             }}>
                                 Vérifier
                             </Button>
-                            <Button type="primary" icon={<PhoneOutlined />} onClick={() => moveToCalls(record)}>
+                            <Button variant="solid" color="geekblue" icon={<PhoneOutlined />} onClick={() => moveToCalls(record)}>
                                 Appeler
                             </Button>
-                            <Button danger icon={<CloseCircleOutlined />} onClick={() => askDecline(record)}>
+                            <Button variant="solid" color="volcano" icon={<CloseCircleOutlined />} onClick={() => askDecline(record)}>
                                 Décliner
                             </Button>
                         </Space>
@@ -198,13 +198,13 @@ export default function ContractTable({
                     // Cas à examiner: Vérifier (Drawer) + Appeler (→ calls) + Décliner (→ declined)
                     return (
                         <Space>
-                            <Button icon={<FileSearchOutlined />} onClick={() => openDrawer(record)}>
+                            <Button variant="solid" color="cyan" icon={<FileSearchOutlined />} onClick={() => openDrawer(record)}>
                                 Vérifier
                             </Button>
-                            <Button type="primary" icon={<PhoneOutlined />} onClick={() => moveToCalls(record)}>
+                            <Button variant="solid" color="geekblue" icon={<PhoneOutlined />} onClick={() => moveToCalls(record)}>
                                 Appeler
                             </Button>
-                            <Button danger icon={<CloseCircleOutlined />} onClick={() => askDecline(record)}>
+                            <Button variant="solid" color="volcano" icon={<CloseCircleOutlined />} onClick={() => askDecline(record)}>
                                 Décliner
                             </Button>
                         </Space>

@@ -2828,6 +2828,15 @@ button[type="submit"] {
         margin-right: 10px;
       }
     }
+
+    .ant-tag {
+      border: 1px solid black;
+      font-weight: 700;
+    }
+
+    button {
+      font-weight: 500;
+    }
   }
 
   .ant-table-cell {
