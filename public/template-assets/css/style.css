@@ -605,7 +605,7 @@ p {
 .navbar-area {
   background: -webkit-linear-gradient(left, #43cae9 0%, #38f9d7 100%);
   background: -o-linear-gradient(left, #43cae9 0%, #38f9d7 100%);
-  background: linear-gradient(to right, #43cae9 0%, #38f9d7 100%);
+  background: linear-gradient(to left, #43cae9 0%, #38f9d7 100%);
   padding: 10px 0;
   position: absolute;
   top: 0;
@@ -2201,7 +2201,7 @@ p {
 ===========================*/
 .footer-area .footer-widget {
   padding-top: 90px;
-  padding-bottom: 90px; }
+  padding-bottom: 30px; }
   @media only screen and (min-width: 768px) and (max-width: 991px) {
     .footer-area .footer-widget {
       padding-top: 70px;
@@ -2772,6 +2772,10 @@ button[type="submit"] {
 .backoffice-board {
   width: 100%;
 
+  button {
+     outline: none !important;
+  }
+
   svg {
     overflow: inherit;
   }
@@ -2783,8 +2787,10 @@ button[type="submit"] {
     .ant-avatar {
       width: 32px;
       height: 32px;
+      border: 1px solid black;
     }
   }
+
   .ant-menu {
     margin-top: 16px;
 
@@ -2793,6 +2799,45 @@ button[type="submit"] {
         font-size: 16px;
       }
     }
+
+    .ant-menu-item-selected {
+      background: #1677ff;
+      color: white;
+
+      .anticon-close-circle {
+        color: white !important;
+      }
+    }
+  }
+
+  .ant-layout-content {
+    > .ant-row {
+      justify-content: space-evenly;
+    }
+
+    .ant-card {
+      background: #7dfaf0;
+      border: 1px solid black;
+
+      .ant-statistic-title{
+        font-weight: 700;
+        color: black !important;
+      }
+
+      .ant-statistic-content-prefix {
+        margin-right: 10px;
+      }
+    }
+  }
+
+  .ant-table-cell {
+    &:before {
+      background-color: black !important;
+    }
+  }
+
+  .ant-pagination {
+    justify-content: center;
   }
 }
 

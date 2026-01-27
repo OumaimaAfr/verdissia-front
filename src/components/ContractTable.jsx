@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Table, Tag, Space, Button, Input, Dropdown, message } from 'antd';
-import { EyeOutlined, PhoneOutlined, MoreOutlined, FileSearchOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { Table, Tag, Space, Button, Input, Dropdown, message, Modal, Form, Typography } from 'antd';
+import { EyeOutlined, PhoneOutlined, FilePdfOutlined, CloseCircleOutlined, FileSearchOutlined, MoreOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import ContractDrawer from './ContractDrawer';
-import { addCall } from '../utils/callsStore';
+import { openAndDownloadContract } from '../utils/contractPdf';
+import { setState as setWorkflowState, STATES } from '../utils/workflowStore';
+import dayjs from 'dayjs';
 
 const { Search } = Input;
 
@@ -13,14 +15,24 @@ const decisionTag = (decision) => {
         'REJET': { color: 'red', text: 'REJET' },
         'VÉRIFICATION_OBLIGATOIRE': { color: 'gold', text: 'VÉRIFICATION OBLIGATOIRE' },
     };
-    const d = map[decision] || { color: 'default', text: decision };
+    const d = map[decision] || { color: 'default', text: decision || '—' };
     return <Tag color={d.color}>{d.text}</Tag>;
 };
 
-function ContractTable({data, title, mode = 'generic', onRemovedFromCalls }) {
+export default function ContractTable({
+                                          data,
+                                          title,
+                                          mode = 'generic', // 'create' | 'blocked' | 'calls' | 'declined' | 'examiner'
+                                          onChangedList,
+                                      }) {
     const [query, setQuery] = useState('');
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [selected, setSelected] = useState(null);
+
+    // Decline modal
+    const [declineOpen, setDeclineOpen] = useState(false);
+    const [declineTarget, setDeclineTarget] = useState(null);
+    const [form] = Form.useForm();
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
@@ -37,126 +49,204 @@ function ContractTable({data, title, mode = 'generic', onRemovedFromCalls }) {
     const openDrawer = (record) => { setSelected(record); setDrawerOpen(true); };
     const closeDrawer = () => { setDrawerOpen(false); setSelected(null); };
 
-    const callClient = (record) => {
-        addCall(record);
+    // Actions helpers
+    const moveToCalls = (record) => {
+        setWorkflowState(record.numeroContrat, STATES.CALLS, { movedAt: dayjs().toISOString() });
         message.success('Ajouté à "Clients à appeler"');
+        onChangedList?.();
     };
 
+    const moveToToCreate = (record) => {
+        setWorkflowState(record.numeroContrat, STATES.TO_CREATE, { movedAt: dayjs().toISOString() });
+        message.success('Ajouté à "Contrats à créer"');
+        onChangedList?.();
+    };
+
+    const moveToExaminer = (record) => {
+        setWorkflowState(record.numeroContrat, STATES.EXAMINER, { movedAt: dayjs().toISOString() });
+        onChangedList?.();
+    };
+
+    const askDecline = (record) => {
+        setDeclineTarget(record);
+        form.resetFields();
+        setDeclineOpen(true);
+    };
+
+    const confirmDecline = async () => {
+        try {
+            const { motif } = await form.validateFields();
+            setWorkflowState(declineTarget.numeroContrat, STATES.DECLINED, {
+                motifRejet: motif,
+                declinedAt: dayjs().toISOString()
+            });
+            message.success('Dossier décliné');
+            setDeclineOpen(false);
+            onChangedList?.();
+        } catch {
+            // validation fail
+        }
+    };
+
+    // Colonnes
     const columns = [
         {
             title: 'N° Dossier',
             dataIndex: 'numeroContrat',
             key: 'numeroContrat',
-            width: 140,
+            width: 130,
             render: (v) => <strong>{v}</strong>,
         },
         {
             title: 'Client',
             key: 'client',
-            width: 220,
+            width: 165,
             render: (_, r) => `${r.civilite || ''} ${r.prenom || ''} ${r.nom || ''}`,
         },
         {
             title: 'Localisation',
             key: 'loc',
-            width: 220,
+            width: 145,
             render: (_, r) => `${r.ville || ''} (${r.codePostal || ''})`,
         },
         {
             title: 'Énergie',
             dataIndex: 'typeEnergie',
             key: 'typeEnergie',
-            width: 130,
+            width: 100,
         },
         {
             title: 'Offre',
             key: 'offre',
-            width: 220,
+            width: 106,
             render: (_, r) => r.libelleOffre || r.offre || '—',
         },
-        {
+        ...(mode !== 'declined' ? [{
             title: 'Décision',
             dataIndex: 'decision',
             key: 'decision',
-            width: 170,
+            width: 74,
             render: (d) => decisionTag(d),
-        },
-        {
+        }] : []),
+        ...(mode !== 'declined' ? [{
             title: 'Score IA',
             dataIndex: 'confidence',
             key: 'confidence',
-            width: 100,
+            width: 85,
             render: (c) => (c ?? '—'),
             sorter: (a, b) => (a.confidence ?? 0) - (b.confidence ?? 0),
-        },
+        }] : []),
+        ...(mode === 'declined' ? [
+            {
+                title: 'Motif rejet',
+                dataIndex: 'motifRejet',
+                key: 'motifRejet',
+                width: 280,
+                render: (v) => v || '—',
+            },
+            {
+                title: 'Date rejet',
+                dataIndex: 'declinedAt',
+                key: 'declinedAt',
+                width: 180,
+                render: (v) => v ? dayjs(v).format('DD/MM/YYYY HH:mm') : '—',
+            }
+        ] : []),
         {
             title: 'Actions',
             key: 'actions',
             fixed: 'right',
-            width: 230,
+            width: (mode === 'declined' || mode === 'examiner') ? 120 : 190,
             render: (_, record) => {
-                const items = [
-                    {
-                        key: 'examiner',
-                        icon: <FileSearchOutlined />,
-                        label: 'Examiner',
-                        onClick: () => openDrawer(record),
-                    },
-                    {
-                        key: 'rejeter',
-                        icon: <CloseCircleOutlined />,
-                        label: 'Rejeter',
-                        onClick: () => {
-                            // TODO: call backend reject if needed
-                            message.info('Dossier marqué comme rejeté (mock)');
-                        },
-                    },
-                ];
+                if (mode === 'create') {
+                    // Contrats à créer: Voir + PDF
+                    return (
+                        <Space>
+                            <Button icon={<EyeOutlined />} onClick={() => openDrawer(record)}>Voir</Button>
+                            <Button type="primary" icon={<FilePdfOutlined />} onClick={() => {
+                                openAndDownloadContract(record);
+                            }}>
+                                Créer contrat
+                            </Button>
+                        </Space>
+                    );
+                }
 
-                return (
-                    <Space>
-                        <Button icon={<EyeOutlined />} onClick={() => openDrawer(record)}>
-                            Voir
-                        </Button>
-
-                        {mode !== 'create' && (
-                            <Button type="primary" icon={<PhoneOutlined />} onClick={() => callClient(record)}>
+                if (mode === 'blocked') {
+                    // Cas bloqués: Voir + Vérifier (→ examiner) + Appeler + Décliner
+                    return (
+                        <Space>
+                            <Button icon={<EyeOutlined />} onClick={() => openDrawer(record)}>
+                                Voir
+                            </Button>
+                            <Button icon={<FileSearchOutlined />} onClick={() => {
+                                moveToExaminer(record);
+                            }}>
+                                Vérifier
+                            </Button>
+                            <Button type="primary" icon={<PhoneOutlined />} onClick={() => moveToCalls(record)}>
                                 Appeler
                             </Button>
-                        )}
+                            <Button danger icon={<CloseCircleOutlined />} onClick={() => askDecline(record)}>
+                                Décliner
+                            </Button>
+                        </Space>
+                    );
+                }
 
-                        <Dropdown menu={{ items }}>
-                            <Button icon={<MoreOutlined />} />
-                        </Dropdown>
-                    </Space>
+                if (mode === 'examiner') {
+                    // Cas à examiner: Vérifier (Drawer) + Appeler (→ calls) + Décliner (→ declined)
+                    return (
+                        <Space>
+                            <Button icon={<FileSearchOutlined />} onClick={() => openDrawer(record)}>
+                                Vérifier
+                            </Button>
+                            <Button type="primary" icon={<PhoneOutlined />} onClick={() => moveToCalls(record)}>
+                                Appeler
+                            </Button>
+                            <Button danger icon={<CloseCircleOutlined />} onClick={() => askDecline(record)}>
+                                Décliner
+                            </Button>
+                        </Space>
+                    );
+                }
+
+                if (mode === 'calls') {
+                    // Clients à appeler: Voir + (Créer contrat → toCreate) + Décliner
+                    return (
+                        <Space>
+                            <Button icon={<EyeOutlined />} onClick={() => openDrawer(record)}>Voir</Button>
+                            <Button type="primary" icon={<PlusCircleOutlined />} onClick={() => moveToToCreate(record)}>
+                                Créer contrat
+                            </Button>
+                            <Button danger icon={<CloseCircleOutlined />} onClick={() => askDecline(record)}>
+                                Décliner
+                            </Button>
+                        </Space>
+                    );
+                }
+
+                if (mode === 'declined') {
+                    // Cas déclinés: Voir seulement
+                    return (
+                        <Space>
+                            <Button icon={<EyeOutlined />} onClick={() => openDrawer(record)}>Voir</Button>
+                        </Space>
+                    );
+                }
+
+                return (
+                    <Dropdown menu={{ items: [{ key: 'view', icon: <EyeOutlined />, label: 'Voir', onClick: () => openDrawer(record) }] }}>
+                        <Button icon={<MoreOutlined />} />
+                    </Dropdown>
                 );
             },
         },
     ];
 
-    // In "Contrats à créer", we replace the "Appeler" by "Créer contrat"
-    if (mode === 'create') {
-        columns[columns.length - 1] = {
-            ...columns[columns.length - 1],
-            render: (_, record) => (
-                <Space>
-                    <Button icon={<EyeOutlined />} onClick={() => openDrawer(record)}>
-                        Voir
-                    </Button>
-                    <Button type="primary" onClick={() => {
-                        // TODO: backend create contract
-                        message.success('Contrat créé (mock)');
-                    }}>
-                        Créer contrat
-                    </Button>
-                </Space>
-            ),
-        };
-    }
-
     return (
         <>
-            <div style={{ marginBottom: 12, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div style={{ marginBottom: 20, marginTop: 25, display:'flex', gap: 90, alignItems:'center' }}>
                 <h3 style={{ margin: 0 }}>{title}</h3>
                 <Search
                     placeholder="Rechercher (nom, email, ville, n°…)"
@@ -171,13 +261,32 @@ function ContractTable({data, title, mode = 'generic', onRemovedFromCalls }) {
                 rowKey={(r) => r.numeroContrat}
                 columns={columns}
                 dataSource={filtered}
-                pagination={{ pageSize: 10, showSizeChanger: true }}
-                scroll={{ x: 1000 }}
+                pagination={{ pageSize: 10 }}
             />
 
             <ContractDrawer open={drawerOpen} onClose={closeDrawer} record={selected} />
+
+            <Modal
+                title="Décliner le dossier"
+                open={declineOpen}
+                onOk={confirmDecline}
+                onCancel={() => setDeclineOpen(false)}
+                okText="Confirmer le rejet"
+                okButtonProps={{ danger: true }}
+            >
+                <Typography.Paragraph>
+                    Merci d’indiquer le <strong>motif de rejet</strong>. Il apparaîtra dans <em>Cas déclinés</em>.
+                </Typography.Paragraph>
+                <Form form={form} layout="vertical">
+                    <Form.Item
+                        name="motif"
+                        label="Motif de rejet"
+                        rules={[{ required: true, message: 'Le motif est obligatoire' }]}
+                    >
+                        <Input.TextArea rows={4} maxLength={500} showCount placeholder="Ex: Email invalide, Téléphone non conforme, Adresse incohérente..." />
+                    </Form.Item>
+                </Form>
+            </Modal>
         </>
     );
 }
-
-export default ContractTable;

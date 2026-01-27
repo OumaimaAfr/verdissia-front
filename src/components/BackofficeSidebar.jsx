@@ -1,6 +1,12 @@
 import { Layout, Menu } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
-import { CheckCircleOutlined, ExclamationCircleOutlined, PhoneOutlined } from '@ant-design/icons';
+import {
+    CheckCircleOutlined,
+    CloseCircleOutlined,
+    ExclamationCircleOutlined,
+    FileSearchOutlined,
+    PhoneOutlined
+} from '@ant-design/icons';
 
 const { Sider } = Layout;
 
@@ -22,14 +28,24 @@ function BackofficeSidebar() {
                         label: <Link to="/backoffice">Contrats à créer</Link>,
                     },
                     {
-                        key: '/backoffice/review',
+                        key: '/backoffice/blocked',
                         icon: <ExclamationCircleOutlined />,
-                        label: <Link to="/backoffice/review">Cas à revoir</Link>,
+                        label: <Link to="/backoffice/blocked">Cas bloqués</Link>, // (renommé)
+                    },
+                    {
+                        key: '/backoffice/examiner',
+                        icon: <FileSearchOutlined />,
+                        label: <Link to="/backoffice/examiner">Cas à examiner</Link>,
                     },
                     {
                         key: '/backoffice/calls',
                         icon: <PhoneOutlined />,
                         label: <Link to="/backoffice/calls">Clients à appeler</Link>,
+                    },
+                    {
+                        key: '/backoffice/declined',
+                        icon: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />,
+                        label: <Link to="/backoffice/declined">Cas déclinés</Link>,
                     },
                 ]}
             />

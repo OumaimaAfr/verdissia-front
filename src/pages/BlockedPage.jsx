@@ -2,12 +2,12 @@ import useBackofficeBuckets from '../hooks/useBackofficeBuckets';
 import StatsBar from '../components/StatsBar';
 import ContractTable from '../components/ContractTable';
 
-export default function ClientsCallPage() {
-    const { calls, totals, refresh } = useBackofficeBuckets();
+export default function BlockedPage() {
+    const { blocked, totals, refresh } = useBackofficeBuckets();
     return (
         <>
             <StatsBar totals={totals} />
-            <ContractTable data={calls} title="Clients à appeler" mode="calls" onChangedList={refresh} />
+            <ContractTable data={blocked} title="Cas bloqués" mode="blocked" onChangedList={refresh} />
         </>
     );
 }

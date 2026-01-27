@@ -11,8 +11,6 @@ function HomePage(){
             <Hero />
             <Sidebar />
             <About />
-            <Portfolio />
-            <Pricing />
             <Blog />
             <a href="#" className="back-to-top"><i className="lni-chevron-up"></i></a>
         </>

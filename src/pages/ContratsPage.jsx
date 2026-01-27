@@ -1,24 +1,19 @@
-import { useContext, useMemo } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import useBackofficeBuckets from '../hooks/useBackofficeBuckets';
 import StatsBar from '../components/StatsBar';
 import ContractTable from '../components/ContractTable';
 
-function ContratsPage() {
-    const { contracts } = useContext(AuthContext);
-
-    const toCreate = contracts.filter(c => c.decision === "VALIDE");
-    const toReview = contracts.filter(c => c.decision !== "VALIDE");
+export default function ContratsPage() {
+    const { toCreate, totals, refresh } = useBackofficeBuckets();
 
     return (
         <>
-            <StatsBar totals={{
-                toCreate: toCreate.length,
-                toReview: toReview.length,
-                toCall: 0
-            }}/>
-            <ContractTable data={toCreate} title="Contrats à créer" mode="create" />
+            <StatsBar totals={totals} />
+            <ContractTable
+                data={toCreate}
+                title="Contrats à créer"
+                mode="create"
+                onChangedList={refresh}
+            />
         </>
     );
 }
-
-export default ContratsPage;
