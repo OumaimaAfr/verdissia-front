@@ -2216,6 +2216,7 @@ p {
     line-height: 18px;
     color: #6c6c6c; }
   .footer-area .footer-widget .footer-link {
+    text-align: center;
     margin-top: 32px; }
     .footer-area .footer-widget .footer-link ul {
       margin-top: 8px; }

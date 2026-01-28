@@ -20,7 +20,7 @@ function Footer(){
                                 <ul>
                                     <li><a href="#">Offres d’Électricité Verte</a></li>
                                     <li><a href="#">Offres Pro</a></li>
-                                    <li><a href="#">Autoconsommation & Solaire</a></li>
+                                    <li><a href="#">Autoconsommation</a></li>
                                 </ul>
                             </div>
                         </div>
