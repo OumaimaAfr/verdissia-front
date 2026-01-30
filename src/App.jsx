@@ -13,6 +13,7 @@ import ClientsCallPage from "./pages/ClientsCallPage.jsx";
 import BlockedPage from "./pages/BlockedPage";
 import DeclinedPage from "./pages/DeclinedPage";
 import ExaminerPage from "./pages/ExaminerPage.jsx";
+import DashboardPage from "./pages/DashboardPage.jsx";
 
 function RootLayout() {
     const { pathname } = useLocation();
@@ -47,6 +48,7 @@ function App() {
                     }
                 >
                     <Route index element={<ContratsPage />} />
+                    <Route path="/backoffice/dashboard" element={<DashboardPage />} />
                     <Route path="/backoffice/blocked" element={<BlockedPage />} />
                     <Route path="/backoffice/examiner" element={<ExaminerPage />} />
                     <Route path="calls" element={<ClientsCallPage />} />

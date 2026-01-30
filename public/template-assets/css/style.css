@@ -2875,3 +2875,11 @@ button[type="submit"] {
     text-align: center;
   }
 }
+
+.dashboard-charts {
+  .ant-card-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}

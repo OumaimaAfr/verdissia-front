@@ -1,6 +1,7 @@
 import { Layout, Menu } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 import {
+    BarChartOutlined,
     CheckCircleOutlined,
     CloseCircleOutlined,
     ExclamationCircleOutlined,
@@ -22,6 +23,11 @@ function BackofficeSidebar() {
                 mode="inline"
                 selectedKeys={selectedKeys}
                 items={[
+                    {
+                        key: '/backoffice/dashboard',
+                        icon: <BarChartOutlined />,
+                        label: <Link to="/backoffice/dashboard">Tableau de bord</Link>,
+                    },
                     {
                         key: '/backoffice',
                         icon: <CheckCircleOutlined />,

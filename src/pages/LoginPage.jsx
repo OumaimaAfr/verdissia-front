@@ -27,7 +27,7 @@ function LoginPage() {
             const contracts = await login(username, password);
             initSession(localStorage.getItem("access_token"), contracts);
             message.success("Connexion réussie");
-            window.location.href = "/backoffice";
+            window.location.href = "/backoffice/dashboard";
 
         } catch (e) {
             setErrorMsg("Identifiants invalides");

@@ -1,0 +1,162 @@
+import { Row, Col, Card } from 'antd';
+import {
+    PieChart, Pie, Cell,
+    BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
+    LineChart, Line,
+} from 'recharts';
+import useBackofficeBuckets from '../hooks/useBackofficeBuckets';
+import dayjs from 'dayjs';
+
+function PieSideLegend({ data }) {
+    return (
+        <div style={{
+            width: 240,
+            paddingLeft: 16,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+            overflowY: 'auto'
+        }}>
+            {data.map(item => (
+                <div key={item.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span
+                style={{
+                    width: 12, height: 12, borderRadius: 999,
+                    background: item.color, display: 'inline-block'
+                }}
+                aria-label={`couleur pour ${item.name}`}
+            />
+                        <span style={{ fontSize: 14, fontWeight: 500}}>{item.name}</span>
+                    </div>
+                    <strong style={{ minWidth: 28, textAlign: 'right' }}>{item.value}</strong>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+export default function DashboardPage() {
+    const { toCreate, blocked, calls, examiner, declined, totals } = useBackofficeBuckets();
+
+    const PIE_COLORS = {
+        toCreate:  '#52c41a', // Contrats à créer
+        blocked:   '#fa8c16', // Cas bloqués
+        toExamine: '#1677ff', // Cas à examiner
+        toCall:    '#722ed1', // Clients à appeler
+        declined:  '#ff4d4f', // Cas déclinés
+    };
+
+    const makePieData = (totals) => ([
+        { key: 'toCreate',  name: 'Contrats à créer',  value: totals.toCreate,  color: PIE_COLORS.toCreate  },
+        { key: 'blocked',   name: 'Cas bloqués',       value: totals.toReview,  color: PIE_COLORS.blocked   },
+        { key: 'toExamine', name: 'Cas à examiner',    value: totals.toExamine, color: PIE_COLORS.toExamine },
+        { key: 'toCall',    name: 'Clients à appeler', value: totals.toCall,    color: PIE_COLORS.toCall    },
+        { key: 'declined',  name: 'Cas déclinés',      value: totals.declined,  color: PIE_COLORS.declined  },
+    ]);
+
+    const pieData = makePieData(totals);
+
+    const COLORS = ['#52c41a', '#fa8c16', '#1677ff', '#722ed1', '#ff4d4f'];
+
+    // GRAPH 2 — Décisions IA
+    const decisionCount = {};
+    [...toCreate, ...blocked, ...calls, ...examiner, ...declined].forEach(c => {
+        decisionCount[c.decision] = (decisionCount[c.decision] || 0) + 1;
+    });
+
+    const decisionsData = Object.entries(decisionCount).map(([decision, count]) => ({
+        decision,
+        count,
+    }));
+
+    // GRAPH 3 — Type d’énergie
+    const energyCount = {};
+    [...toCreate, ...blocked, ...calls, ...examiner, ...declined].forEach(c => {
+        energyCount[c.typeEnergie] = (energyCount[c.typeEnergie] || 0) + 1;
+    });
+
+    const energyData = Object.entries(energyCount).map(([type, count]) => ({
+        type,
+        count,
+    }));
+
+    // GRAPH 4 — Volume par date de mise en service
+    const byDate = {};
+    [...toCreate, ...blocked, ...calls, ...examiner, ...declined].forEach(c => {
+        const d = dayjs(c.dateMiseEnService).format('YYYY-MM-DD');
+        byDate[d] = (byDate[d] || 0) + 1;
+    });
+
+    const dateData = Object.entries(byDate).map(([date, count]) => ({
+        date,
+        count,
+    })).sort((a, b) => (a.date < b.date ? -1 : 1));
+
+    return (
+        <div className="dashboard-charts">
+            <Row gutter={[16, 16]}>
+                {/* PIE CHART */}
+                <Col xs={24} md={12}>
+                    <Card title="Répartition des cas">
+                        <PieChart width={350} height={300}>
+                            <Pie
+                                data={pieData}
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={100}
+                                dataKey="value"
+                                label
+                            >
+                                {pieData.map((entry) => (
+                                    <Cell key={entry.key} fill={entry.color} />
+                                ))}
+                            </Pie>
+                            <Tooltip />
+                        </PieChart>
+                        <PieSideLegend data={pieData} />
+                    </Card>
+                </Col>
+
+                {/* DECISION BAR CHART */}
+                <Col xs={24} md={12}>
+                    <Card title="Décisions IA">
+                        <BarChart width={400} height={300} data={decisionsData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="decision" />
+                            <YAxis />
+                            <Tooltip />
+                            <Bar dataKey="count" fill="#1677ff" />
+                        </BarChart>
+                    </Card>
+                </Col>
+
+                {/* ENERGY BAR CHART */}
+                <Col xs={24} md={12}>
+                    <Card title="Répartition par type d’énergie">
+                        <BarChart width={400} height={300} data={energyData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="type" />
+                            <YAxis />
+                            <Tooltip />
+                            <Bar dataKey="count" fill="#52c41a" />
+                        </BarChart>
+                    </Card>
+                </Col>
+
+                {/* LINE CHART: VOLUME PAR DATE */}
+                <Col xs={24} md={12}>
+                    <Card title="Volume par date de mise en service">
+                        <LineChart width={400} height={300} data={dateData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="date" />
+                            <YAxis />
+                            <Tooltip />
+                            <Line type="monotone" dataKey="count" stroke="#fa8c16" strokeWidth={2} />
+                        </LineChart>
+                    </Card>
+                </Col>
+            </Row>
+        </div>
+    );
+}
