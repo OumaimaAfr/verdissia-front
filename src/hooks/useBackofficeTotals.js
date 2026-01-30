@@ -8,13 +8,11 @@ function useBackofficeTotals() {
     const [callsCount, setCallsCount] = useState(() => getCalls().length);
     const [declinedCount, setDeclinedCount] = useState(() => getDeclined().length);
 
-    // Recompute localStorage-based counters
     const recomputeLocal = useCallback(() => {
         setCallsCount(getCalls().length);
         setDeclinedCount(getDeclined().length);
     }, []);
 
-    // Listen to cross-tab changes
     useEffect(() => {
         const onStorage = (e) => {
             if (!e) return;
@@ -26,21 +24,18 @@ function useBackofficeTotals() {
         return () => window.removeEventListener('storage', onStorage);
     }, [recomputeLocal]);
 
-    // Compute buckets from contracts held in context
     const toCreate = useMemo(() => contracts.filter(c => c.decision === 'VALIDE'), [contracts]);
     const toReview = useMemo(() => contracts.filter(c => c.decision !== 'VALIDE'), [contracts]);
 
     const totals = useMemo(() => ({
         toCreate: toCreate.length,
-        toReview: toReview.length,       // “Cas bloqués” (non-VALIDE)
-        toCall: callsCount,              // Clients à appeler (localStorage)
-        declined: declinedCount,         // Cas déclinés (localStorage)
+        toReview: toReview.length,
+        toCall: callsCount,
+        declined: declinedCount,
     }), [toCreate.length, toReview.length, callsCount, declinedCount]);
 
-    // Expose an explicit refresh to call after actions
     const refresh = useCallback(() => {
         recomputeLocal();
-        // If un jour tu veux refetch contracts serveur, tu peux l’appeler ici.
     }, [recomputeLocal]);
 
     return { totals, toCreate, toReview, refresh };

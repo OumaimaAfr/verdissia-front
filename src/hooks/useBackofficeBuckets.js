@@ -7,7 +7,7 @@ const WORKFLOW_KEY = 'workflow_map_v1';
 
 export default function useBackofficeBuckets() {
     const { contracts } = useContext(AuthContext);
-    const [version, setVersion] = useState(0); // force recompute
+    const [version, setVersion] = useState(0);
 
     const refresh = useCallback(() => setVersion(v => v + 1), []);
 
@@ -28,10 +28,10 @@ export default function useBackofficeBuckets() {
 
     const totals = useMemo(() => ({
         toCreate: toCreate.length,
-        toReview: blocked.length,   // Cas bloqués
+        toReview: blocked.length,
         toCall: calls.length,
         declined: declined.length,
-        toExamine: examiner.length, // Si tu veux l’afficher
+        toExamine: examiner.length,
     }), [toCreate.length, blocked.length, calls.length, declined.length, examiner.length]);
 
     return { toCreate, blocked, calls, examiner, declined, totals, refresh };

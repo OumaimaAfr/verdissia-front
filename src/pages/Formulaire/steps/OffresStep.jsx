@@ -56,7 +56,7 @@ function OffresStep({ offres = [], onFinish, initialValues, resetSignal }) {
                              }}
                              className={`offre-row ${isSelected ? "selected" : ""}`}>
                             <div className="offre-content">
-                                <img className="offre-picto" src="/template-assets/pictos/offre1.png" alt="picto"/>
+                                <img className="offre-picto" src="/assets/pictos/offre1.png" alt="picto"/>
                                 <div className="offre-infos">
                                     <div className="offre-titre-header">
                                         <div className="offre-titre">{titre}</div>

@@ -1,7 +1,7 @@
 import { Layout } from 'antd';
 import { Outlet } from 'react-router-dom';
-import BackofficeHeader from '../components/BackofficeHeader';
-import BackofficeSidebar from '../components/BackofficeSidebar';
+import BackofficeHeader from '../../components/BackofficeHeader.jsx';
+import BackofficeSidebar from '../../components/BackofficeSidebar.jsx';
 
 const { Content } = Layout;
 

@@ -22,13 +22,12 @@ export function openAndDownloadContract(record, options = {}) {
     const {
         civilite, nom, prenom, voie, codePostal, ville, email, telephone,
         typeEnergie, offre, libelleOffre, dateMiseEnService, prix,
-        numeroContrat, decision, confidence, motifMessage, details
+        numeroContrat
     } = record;
 
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    // Header
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.text(provider.name, 40, 50);
@@ -39,18 +38,15 @@ export function openAndDownloadContract(record, options = {}) {
     doc.text(`${provider.phone} • ${provider.email}`, 40, 85);
     doc.text(`${provider.siret}`, 40, 100);
 
-    // Title
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
     doc.text('Contrat de fourniture d’énergie', pageWidth / 2, 140, { align: 'center' });
 
-    // Meta
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
     doc.text(`Numéro de dossier : ${textOrDash(numeroContrat)}`, 40, 170);
     doc.text(`Date d’émission : ${dayjs().format('DD MMMM YYYY')}`, 40, 190);
 
-    // Parties
     autoTable(doc, {
         startY: 210,
         theme: 'grid',
@@ -62,7 +58,6 @@ export function openAndDownloadContract(record, options = {}) {
         ],
     });
 
-    // Détails de l’offre
     autoTable(doc, {
         startY: doc.lastAutoTable.finalY + 16,
         theme: 'grid',
@@ -76,7 +71,6 @@ export function openAndDownloadContract(record, options = {}) {
         ],
     });
 
-    // Conditions principales
     autoTable(doc, {
         startY: doc.lastAutoTable.finalY + 16,
         theme: 'plain',
@@ -91,7 +85,6 @@ export function openAndDownloadContract(record, options = {}) {
         ],
     });
 
-    // Signature
     autoTable(doc, {
         startY: doc.lastAutoTable.finalY + 24,
         theme: 'plain',
@@ -106,22 +99,17 @@ export function openAndDownloadContract(record, options = {}) {
         ],
     });
 
-    // Footer
     doc.setFontSize(9);
     doc.setTextColor('#888');
     doc.text(footerNote, 40, doc.internal.pageSize.getHeight() - 30);
 
-    // Ouvrir dans un nouvel onglet + proposer téléchargement
     const fileName = `Contrat_${textOrDash(prenom)}_${textOrDash(nom)}_${textOrDash(numeroContrat)}.pdf`.replace(/\s+/g, '_');
     const blob = doc.output('blob');
     const url = URL.createObjectURL(blob);
-    // Preview (peut être bloqué par le navigateur si pop-ups bloquées)
     window.open(url);
-    // Télécharger
     const link = document.createElement('a');
     link.href = url;
     link.download = fileName;
     link.click();
-    // Libérer plus tard
     setTimeout(() => URL.revokeObjectURL(url), 10000);
 }

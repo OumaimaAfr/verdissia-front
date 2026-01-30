@@ -22,14 +22,13 @@ const decisionTag = (decision) => {
 export default function ContractTable({
                                           data,
                                           title,
-                                          mode = 'generic', // 'create' | 'blocked' | 'calls' | 'declined' | 'examiner'
+                                          mode = 'generic',
                                           onChangedList,
                                       }) {
     const [query, setQuery] = useState('');
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [selected, setSelected] = useState(null);
 
-    // Decline modal
     const [declineOpen, setDeclineOpen] = useState(false);
     const [declineTarget, setDeclineTarget] = useState(null);
     const [form] = Form.useForm();
@@ -49,7 +48,6 @@ export default function ContractTable({
     const openDrawer = (record) => { setSelected(record); setDrawerOpen(true); };
     const closeDrawer = () => { setDrawerOpen(false); setSelected(null); };
 
-    // Actions helpers
     const moveToCalls = (record) => {
         setWorkflowState(record.numeroContrat, STATES.CALLS, { movedAt: dayjs().toISOString() });
         message.success('Ajouté à "Clients à appeler"');
@@ -84,11 +82,9 @@ export default function ContractTable({
             setDeclineOpen(false);
             onChangedList?.();
         } catch {
-            // validation fail
         }
     };
 
-    // Colonnes
     const columns = [
         {
             title: 'N° Dossier',
@@ -173,7 +169,6 @@ export default function ContractTable({
                 }
 
                 if (mode === 'blocked') {
-                    // Cas bloqués: Voir + Vérifier (→ examiner) + Appeler + Décliner
                     return (
                         <Space>
                             <Button icon={<EyeOutlined />} onClick={() => openDrawer(record)}>
@@ -195,7 +190,6 @@ export default function ContractTable({
                 }
 
                 if (mode === 'examiner') {
-                    // Cas à examiner: Vérifier (Drawer) + Appeler (→ calls) + Décliner (→ declined)
                     return (
                         <Space>
                             <Button variant="solid" color="cyan" icon={<FileSearchOutlined />} onClick={() => openDrawer(record)}>
@@ -212,7 +206,6 @@ export default function ContractTable({
                 }
 
                 if (mode === 'calls') {
-                    // Clients à appeler: Voir + (Créer contrat → toCreate) + Décliner
                     return (
                         <Space>
                             <Button icon={<EyeOutlined />} onClick={() => openDrawer(record)}>Voir</Button>
@@ -227,7 +220,6 @@ export default function ContractTable({
                 }
 
                 if (mode === 'declined') {
-                    // Cas déclinés: Voir seulement
                     return (
                         <Space>
                             <Button icon={<EyeOutlined />} onClick={() => openDrawer(record)}>Voir</Button>

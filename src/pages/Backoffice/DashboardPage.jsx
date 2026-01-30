@@ -4,7 +4,7 @@ import {
     BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
     LineChart, Line,
 } from 'recharts';
-import useBackofficeBuckets from '../hooks/useBackofficeBuckets';
+import useBackofficeBuckets from '../../hooks/useBackofficeBuckets.js';
 import dayjs from 'dayjs';
 
 function PieSideLegend({ data }) {
@@ -40,11 +40,11 @@ export default function DashboardPage() {
     const { toCreate, blocked, calls, examiner, declined, totals } = useBackofficeBuckets();
 
     const PIE_COLORS = {
-        toCreate:  '#52c41a', // Contrats à créer
-        blocked:   '#fa8c16', // Cas bloqués
-        toExamine: '#1677ff', // Cas à examiner
-        toCall:    '#722ed1', // Clients à appeler
-        declined:  '#ff4d4f', // Cas déclinés
+        toCreate:  '#52c41a',
+        blocked:   '#fa8c16',
+        toExamine: '#1677ff',
+        toCall:    '#722ed1',
+        declined:  '#ff4d4f',
     };
 
     const makePieData = (totals) => ([
@@ -57,9 +57,6 @@ export default function DashboardPage() {
 
     const pieData = makePieData(totals);
 
-    const COLORS = ['#52c41a', '#fa8c16', '#1677ff', '#722ed1', '#ff4d4f'];
-
-    // GRAPH 2 — Décisions IA
     const decisionCount = {};
     [...toCreate, ...blocked, ...calls, ...examiner, ...declined].forEach(c => {
         decisionCount[c.decision] = (decisionCount[c.decision] || 0) + 1;
@@ -70,7 +67,6 @@ export default function DashboardPage() {
         count,
     }));
 
-    // GRAPH 3 — Type d’énergie
     const energyCount = {};
     [...toCreate, ...blocked, ...calls, ...examiner, ...declined].forEach(c => {
         energyCount[c.typeEnergie] = (energyCount[c.typeEnergie] || 0) + 1;
@@ -81,7 +77,6 @@ export default function DashboardPage() {
         count,
     }));
 
-    // GRAPH 4 — Volume par date de mise en service
     const byDate = {};
     [...toCreate, ...blocked, ...calls, ...examiner, ...declined].forEach(c => {
         const d = dayjs(c.dateMiseEnService).format('YYYY-MM-DD');
@@ -96,7 +91,6 @@ export default function DashboardPage() {
     return (
         <div className="dashboard-charts">
             <Row gutter={[16, 16]}>
-                {/* PIE CHART */}
                 <Col xs={24} md={12}>
                     <Card title="Répartition des cas">
                         <PieChart width={350} height={300}>
@@ -117,8 +111,6 @@ export default function DashboardPage() {
                         <PieSideLegend data={pieData} />
                     </Card>
                 </Col>
-
-                {/* DECISION BAR CHART */}
                 <Col xs={24} md={12}>
                     <Card title="Décisions IA">
                         <BarChart width={400} height={300} data={decisionsData}>
@@ -130,8 +122,6 @@ export default function DashboardPage() {
                         </BarChart>
                     </Card>
                 </Col>
-
-                {/* ENERGY BAR CHART */}
                 <Col xs={24} md={12}>
                     <Card title="Répartition par type d’énergie">
                         <BarChart width={400} height={300} data={energyData}>
@@ -143,8 +133,6 @@ export default function DashboardPage() {
                         </BarChart>
                     </Card>
                 </Col>
-
-                {/* LINE CHART: VOLUME PAR DATE */}
                 <Col xs={24} md={12}>
                     <Card title="Volume par date de mise en service">
                         <LineChart width={400} height={300} data={dateData}>

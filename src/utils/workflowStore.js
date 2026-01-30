@@ -17,11 +17,6 @@ export function setMap(map) {
     window.dispatchEvent(new StorageEvent('storage', { key: KEY }));
 }
 
-export function getState(id) {
-    const map = getMap();
-    return map[id];
-}
-
 export function setState(id, state, patch = {}) {
     const map = getMap();
     const prev = map[id] || {};
@@ -37,7 +32,3 @@ export function remove(id) {
     return map;
 }
 
-export function clearAll() {
-    localStorage.removeItem(KEY);
-    window.dispatchEvent(new StorageEvent('storage', { key: KEY }));
-}

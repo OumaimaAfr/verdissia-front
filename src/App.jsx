@@ -7,13 +7,13 @@ import Footer from "./components/Footer.jsx";
 import SignaturePage from "./pages/Signature/SignaturePage.jsx";
 import { ProtectedRoute } from "./ProtectedRoute.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
-import BackofficeLayout from "./pages/BackofficeLayout.jsx";
-import ContratsPage from "./pages/ContratsPage.jsx";
-import ClientsCallPage from "./pages/ClientsCallPage.jsx";
-import BlockedPage from "./pages/BlockedPage";
-import DeclinedPage from "./pages/DeclinedPage";
-import ExaminerPage from "./pages/ExaminerPage.jsx";
-import DashboardPage from "./pages/DashboardPage.jsx";
+import BackofficeLayout from "./pages/Backoffice/BackofficeLayout.jsx";
+import ContratsPage from "./pages/Backoffice/ContratsPage.jsx";
+import ClientsCallPage from "./pages/Backoffice/ClientsCallPage.jsx";
+import BlockedPage from "./pages/Backoffice/BlockedPage.jsx";
+import DeclinedPage from "./pages/Backoffice/DeclinedPage.jsx";
+import ExaminerPage from "./pages/Backoffice/ExaminerPage.jsx";
+import DashboardPage from "./pages/Backoffice/DashboardPage.jsx";
 
 function RootLayout() {
     const { pathname } = useLocation();

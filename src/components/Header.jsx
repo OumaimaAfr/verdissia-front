@@ -12,7 +12,7 @@ function Header() {
     const liBlogActive = isHome && hash === "#blog";
 
     const scrollWithOffset = (el) => {
-        const yOffset = -80; // ajuste selon la hauteur de ta navbar
+        const yOffset = -80;
         const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
         window.scrollTo({ top: y, behavior: "smooth" });
     };
@@ -25,7 +25,7 @@ function Header() {
                         <div className="col-lg-12">
                             <nav className="navbar navbar-expand-lg">
                                 <Link className="navbar-brand" to="/">
-                                    <img src="/template-assets/images/logo-new.png" alt="Logo" />
+                                    <img src="/assets/images/logo-new.png" alt="Logo" />
                                 </Link>
 
                                 <button

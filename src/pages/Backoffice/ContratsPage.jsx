@@ -1,6 +1,6 @@
-import useBackofficeBuckets from '../hooks/useBackofficeBuckets';
-import StatsBar from '../components/StatsBar';
-import ContractTable from '../components/ContractTable';
+import useBackofficeBuckets from '../../hooks/useBackofficeBuckets.js';
+import StatsBar from '../../components/StatsBar.jsx';
+import ContractTable from '../../components/ContractTable.jsx';
 
 export default function ContratsPage() {
     const { toCreate, totals, refresh } = useBackofficeBuckets();

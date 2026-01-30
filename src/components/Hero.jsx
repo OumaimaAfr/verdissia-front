@@ -2,7 +2,7 @@ import {Link} from "react-router-dom";
 
 function Hero(){
     return (
-        <div id="home" className="header-hero bg_cover" style={{ backgroundImage: 'url(/template-assets/images/header-1.png)' }}>
+        <div id="home" className="header-hero bg_cover" style={{ backgroundImage: 'url(/assets/images/header-1.png)' }}>
             <div className="container">
                 <div className="row justify-content-center">
                     <div className="col-xl-8 col-lg-10">
@@ -23,7 +23,7 @@ function Hero(){
                 </div>
             </div>
             <div className="header-shape">
-                <img src="/template-assets/images/header-shape.svg" alt="shape"/>
+                <img src="/assets/images/header-shape.svg" alt="shape"/>
             </div>
         </div>
     )
