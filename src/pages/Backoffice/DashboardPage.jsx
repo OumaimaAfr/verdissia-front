@@ -117,7 +117,7 @@ export default function DashboardPage() {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="decision" />
                             <YAxis />
-                            <Tooltip />
+                            <Tooltip formatter={(value) => [`${value}`, "contrats"]}/>
                             <Bar dataKey="count" fill="#1677ff" />
                         </BarChart>
                     </Card>
@@ -128,7 +128,7 @@ export default function DashboardPage() {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="type" />
                             <YAxis />
-                            <Tooltip />
+                            <Tooltip formatter={(value) => [`${value}`, "contrats"]}/>
                             <Bar dataKey="count" fill="#52c41a" />
                         </BarChart>
                     </Card>
@@ -139,7 +139,7 @@ export default function DashboardPage() {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="date" />
                             <YAxis />
-                            <Tooltip />
+                            <Tooltip formatter={(value) => [`${value}`, "contrats"]}/>
                             <Line type="monotone" dataKey="count" stroke="#fa8c16" strokeWidth={2} />
                         </LineChart>
                     </Card>
