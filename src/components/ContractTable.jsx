@@ -1,10 +1,11 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
-import { Table, Tag, Space, Button, Input, Dropdown, message, Modal, Form, Typography, Select, DatePicker, notification } from 'antd';
-import { EyeOutlined, PhoneOutlined, FilePdfOutlined, CloseCircleOutlined, FileSearchOutlined, MoreOutlined, PlusCircleOutlined, BellOutlined } from '@ant-design/icons';
+import { useMemo, useState } from 'react';
+import { Table, Tag, Space, Button, Input, Dropdown, message, Modal, Form, Typography, Card, Select, DatePicker } from 'antd';
+import { EyeOutlined, PhoneOutlined, FilePdfOutlined, CloseCircleOutlined, FileSearchOutlined, MoreOutlined, PlusCircleOutlined, PushpinOutlined } from '@ant-design/icons';
 import ContractDrawer from './ContractDrawer';
 import { openAndDownloadContract } from '../utils/contractPdf';
 import { setState as setWorkflowState, STATES } from '../utils/workflowStore';
 import dayjs from 'dayjs';
+import { useLocation } from 'react-router-dom';
 
 const { Search } = Input;
 
@@ -21,26 +22,13 @@ const decisionTag = (decision) => {
 };
 
 export default function ContractTable({
-                                          data,
-                                          title,
-                                          mode = 'generic',
-                                          onChangedList,
-                                      }) {
-    const [api, contextHolder] = notification.useNotification();
-    
-    const openNotification = useCallback((clientName, callbackTime) => {
-        api.info({
-            message: `📞 Rappel client imminent`,
-            description: (
-                <div>
-                    <strong>{clientName}</strong> attend un appel dans moins de 10 minutes.<br />
-                    Heure de rappel : <strong>{dayjs(callbackTime).format('HH:mm')}</strong>
-                </div>
-            ),
-            placement: 'topRight',
-            duration: 0, // La notification reste jusqu'à ce qu'elle soit fermée manuellement
-        });
-    }, [api]);
+    data,
+    title,
+    mode = 'generic',
+    onChangedList,
+}) {
+    const { pathname } = useLocation();
+    const isBackofficeListPage = pathname.startsWith('/backoffice') && pathname !== '/backoffice/dashboard';
 
     const [query, setQuery] = useState('');
     const [drawerOpen, setDrawerOpen] = useState(false);
@@ -49,60 +37,6 @@ export default function ContractTable({
     const [declineOpen, setDeclineOpen] = useState(false);
     const [declineTarget, setDeclineTarget] = useState(null);
     const [form] = Form.useForm();
-    
-    // Missing information modal state
-    const [missingInfoOpen, setMissingInfoOpen] = useState(false);
-    const [missingInfoTarget, setMissingInfoTarget] = useState(null);
-    const [missingInfoForm] = Form.useForm();
-    
-    // Call result modal state
-    const [callResultOpen, setCallResultOpen] = useState(false);
-    const [callResultTarget, setCallResultTarget] = useState(null);
-    const [callResultForm] = Form.useForm();
-    const [selectedNextAction, setSelectedNextAction] = useState(null);
-    const [notifiedCallbacks, setNotifiedCallbacks] = useState(new Set());
-
-    // Check for upcoming callbacks every minute
-    useEffect(() => {
-        const checkCallbacks = () => {
-            const now = dayjs();
-            const inTenMinutes = now.add(10, 'minute');
-            
-            data.forEach(record => {
-                if (record.nextAction === 'callback_later' && record.callbackDateTime) {
-                    const callbackTime = dayjs(record.callbackDateTime);
-                    const callbackKey = `${record.numeroContrat}-${record.callbackDateTime}`;
-                    
-                    // Check if callback is within the next 10 minutes and not already notified
-                    if (callbackTime.isAfter(now) && 
-                        callbackTime.isBefore(inTenMinutes) && 
-                        !notifiedCallbacks.has(callbackKey)) {
-                        
-                        const clientName = `${record.prenom || ''} ${record.nom || ''}`.trim();
-                        openNotification(clientName, record.callbackDateTime);
-                        
-                        // Add to notified callbacks
-                        setNotifiedCallbacks(prev => new Set([...prev, callbackKey]));
-                    }
-                    
-                    // Remove from notified callbacks if the callback time has passed
-                    if (callbackTime.isBefore(now) && notifiedCallbacks.has(callbackKey)) {
-                        setNotifiedCallbacks(prev => {
-                            const newSet = new Set(prev);
-                            newSet.delete(callbackKey);
-                            return newSet;
-                        });
-                    }
-                }
-            });
-        };
-
-        // Check immediately and then every minute
-        checkCallbacks();
-        const interval = setInterval(checkCallbacks, 60000); // Check every minute
-
-        return () => clearInterval(interval);
-    }, [data, openNotification, notifiedCallbacks]);
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
@@ -119,10 +53,12 @@ export default function ContractTable({
     const openDrawer = (record) => { setSelected(record); setDrawerOpen(true); };
     const closeDrawer = () => { setDrawerOpen(false); setSelected(null); };
 
-    const moveToCalls = (record, reason = '') => {
+    const moveToCalls = (record, reason = 'À contacter') => {
         setWorkflowState(record.numeroContrat, STATES.CALLS, { 
             movedAt: dayjs().toISOString(),
-            callReason: reason
+            callReason: reason,
+            callStatus: null,
+            notifications: 'En attente d\'appel'
         });
         message.success('Ajouté à "Clients à appeler"');
         onChangedList?.();
@@ -145,22 +81,25 @@ export default function ContractTable({
         setDeclineOpen(true);
     };
 
-    const askMissingInfo = (record) => {
-        setMissingInfoTarget(record);
-        missingInfoForm.resetFields();
-        setMissingInfoOpen(true);
-    };
-
-    const confirmMissingInfo = async () => {
+    const confirmDecline = async () => {
         try {
-            const { missingInfo } = await missingInfoForm.validateFields();
-            const customReason = `Information manquante: ${missingInfo}`;
-            moveToCalls(missingInfoTarget, customReason);
-            setMissingInfoOpen(false);
-            message.success('Ajouté à "Clients à appeler" avec motif personnalisé');
+            const { motif } = await form.validateFields();
+            setWorkflowState(declineTarget.numeroContrat, STATES.DECLINED, {
+                motifRejet: motif,
+                declinedAt: dayjs().toISOString()
+            });
+            message.success('Dossier décliné');
+            setDeclineOpen(false);
+            onChangedList?.();
         } catch {
         }
     };
+
+    // Fonctions pour la gestion des appels
+    const [callResultOpen, setCallResultOpen] = useState(false);
+    const [callResultTarget, setCallResultTarget] = useState(null);
+    const [callResultForm] = Form.useForm();
+    const [selectedNextAction, setSelectedNextAction] = useState(null);
 
     const markAsCalled = (record) => {
         setCallResultTarget(record);
@@ -177,12 +116,13 @@ export default function ContractTable({
                 callNotes,
                 nextAction,
                 calledAt: dayjs().toISOString(),
-                calledBy: 'conseiller'
+                calledBy: 'conseiller',
+                notifications: callStatus === 'success' ? 'Appel réussi' : 'Appel terminé'
             };
             
-            // Add callback datetime if "callback_later" is selected
             if (nextAction === 'callback_later' && callbackDateTime) {
                 updateData.callbackDateTime = callbackDateTime.toISOString();
+                updateData.notifications = 'Rappel prévu';
             }
             
             setWorkflowState(callResultTarget.numeroContrat, STATES.CALLS, updateData);
@@ -200,33 +140,87 @@ export default function ContractTable({
             callNotes: null,
             nextAction: null,
             calledAt: null,
-            calledBy: null
+            calledBy: null,
+            notifications: 'En attente d\'appel'
         });
         message.success('Statut d\'appel réinitialisé');
         onChangedList?.();
     };
 
-    const moveToProcessed = (record) => {
-        setWorkflowState(record.numeroContrat, STATES.PROCESSED, { 
-            processedAt: dayjs().toISOString(),
-            processedBy: 'conseiller'
-        });
-        message.success('Contrat créé et ajouté à "Contrats traités"');
-        onChangedList?.();
+    const getActionBtnProps = (intent) => {
+        if (!isBackofficeListPage) return {};
+
+        const base = {
+            size: 'middle',
+            style: {
+                borderRadius: 10,
+                height: 30,
+                fontWeight: 600,
+                padding: '0 8px',
+                fontSize: 11,
+            },
+        };
+
+        if (intent === 'success') {
+            return {
+                ...base,
+                type: 'primary',
+                style: {
+                    ...base.style,
+                    background: '#10b981',
+                },
+            };
+        }
+
+        if (intent === 'info') {
+            return {
+                ...base,
+                type: 'primary',
+                style: {
+                    ...base.style,
+                    background: '#2563eb',
+                },
+            };
+        }
+
+        if (intent === 'warning') {
+            return {
+                ...base,
+                style: {
+                    ...base.style,
+                    borderColor: '#f59e0b',
+                    color: '#b45309',
+                    background: '#fffbeb',
+                },
+            };
+        }
+
+        if (intent === 'danger') {
+            return {
+                ...base,
+                danger: true,
+            };
+        }
+
+        return base;
     };
 
-    const confirmDecline = async () => {
-        try {
-            const { motif } = await form.validateFields();
-            setWorkflowState(declineTarget.numeroContrat, STATES.DECLINED, {
-                motifRejet: motif,
-                declinedAt: dayjs().toISOString()
-            });
-            message.success('Dossier décliné');
-            setDeclineOpen(false);
-            onChangedList?.();
-        } catch {
+    const actionSpaceProps = isBackofficeListPage ? {
+        wrap: true,
+        size: [8, 8],
+        style: { maxWidth: 260 },
+    } : undefined;
+
+    const actionsWrap = (children) => {
+        if (isBackofficeListPage) {
+            return <div className="bo-actions-wrap" style={{ 
+                display: 'flex', 
+                justifyContent: 'flex-end',
+                width: '100%',
+                textAlign: 'right'
+            }}>{children}</div>;
         }
+        return <Space style={{ justifyContent: 'flex-end', width: '100%' }}>{children}</Space>;
     };
 
     const columns = [
@@ -276,115 +270,6 @@ export default function ContractTable({
             render: (c) => (c ?? '—'),
             sorter: (a, b) => (a.confidence ?? 0) - (b.confidence ?? 0),
         }] : []),
-        ...(mode === 'calls' ? [{
-            title: 'Motif appel',
-            dataIndex: 'callReason',
-            key: 'callReason',
-            width: 180,
-            render: (reason) => {
-                if (!reason) return '—';
-                
-                // Handle custom missing information reasons
-                if (reason.startsWith('Information manquante: ')) {
-                    const customInfo = reason.replace('Information manquante: ', '');
-                    return (
-                        <Tag color="cyan">
-                            ❓ Info manquante: {customInfo}
-                        </Tag>
-                    );
-                }
-                
-                const reasonConfig = {
-                    'Adresse incohérente': { color: 'orange', icon: '📍' },
-                    'Téléphone invalide': { color: 'red', icon: '📞' },
-                    'Email à confirmer': { color: 'blue', icon: '📧' },
-                    'Date non standard': { color: 'purple', icon: '📅' },
-                    'Information manquante': { color: 'cyan', icon: '❓' },
-                };
-                
-                const config = reasonConfig[reason] || { color: 'default', icon: '📞' };
-                
-                return (
-                    <Tag color={config.color}>
-                        {config.icon} {reason}
-                    </Tag>
-                );
-            },
-        }] : []),
-        ...(mode === 'calls' ? [{
-            title: 'Statut appel',
-            dataIndex: 'callStatus',
-            key: 'callStatus',
-            width: 120,
-            render: (status, record) => {
-                if (!status) {
-                    return <Tag color="default">⏳ En attente</Tag>;
-                }
-                
-                const statusConfig = {
-                    'success': { color: 'green', icon: '✅', text: 'Réussi' },
-                    'no_answer': { color: 'orange', icon: '📞', text: 'Pas de réponse' },
-                    'wrong_number': { color: 'red', icon: '❌', text: 'Mauvais numéro' },
-                    'callback': { color: 'blue', icon: '🔄', text: 'Rappel demandé' },
-                    'not_interested': { color: 'volcano', icon: '🚫', text: 'Pas intéressé' },
-                    'postponed': { color: 'purple', icon: '⏰', text: 'Reporté' },
-                };
-                
-                const config = statusConfig[status] || { color: 'default', icon: '❓', text: status };
-                
-                return (
-                    <div>
-                        <Tag color={config.color}>
-                            {config.icon} {config.text}
-                        </Tag>
-                        {record.calledAt && (
-                            <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
-                                {dayjs(record.calledAt).format('DD/MM HH:mm')}
-                            </div>
-                        )}
-                        {record.nextAction === 'callback_later' && record.callbackDateTime && (
-                            <div style={{ fontSize: '11px', color: '#1890ff', marginTop: '2px', fontWeight: 'bold' }}>
-                                📅 Rappel: {dayjs(record.callbackDateTime).format('DD/MM HH:mm')}
-                            </div>
-                        )}
-                    </div>
-                );
-            },
-        }] : []),
-        ...(mode === 'calls' ? [{
-            title: 'Notifications',
-            key: 'notifications',
-            width: 120,
-            render: (_, record) => {
-                if (record.nextAction === 'callback_later' && record.callbackDateTime) {
-                    const now = dayjs();
-                    const callbackTime = dayjs(record.callbackDateTime);
-                    const inTenMinutes = now.add(10, 'minute');
-                    
-                    if (callbackTime.isAfter(now) && callbackTime.isBefore(inTenMinutes)) {
-                        return (
-                            <Tag color="red" icon={<BellOutlined />}>
-                                ⚠️ Imminent
-                            </Tag>
-                        );
-                    } else if (callbackTime.isAfter(now)) {
-                        const timeUntil = callbackTime.diff(now, 'minutes');
-                        return (
-                            <Tag color="orange" icon={<BellOutlined />}>
-                                📅 {timeUntil}min
-                            </Tag>
-                        );
-                    } else {
-                        return (
-                            <Tag color="default">
-                                ⏰ Expiré
-                            </Tag>
-                        );
-                    }
-                }
-                return null;
-            },
-        }] : []),
         ...(mode === 'declined' ? [
             {
                 title: 'Motif rejet',
@@ -404,87 +289,150 @@ export default function ContractTable({
         ...(mode === 'processed' ? [
             {
                 title: 'Date traitement',
-                dataIndex: 'processedAt',
-                key: 'processedAt',
+                dataIndex: 'contractGeneratedAt',
+                key: 'contractGeneratedAt',
                 width: 180,
                 render: (v) => v ? dayjs(v).format('DD/MM/YYYY HH:mm') : '—',
             }
         ] : []),
+        ...(mode === 'calls' ? [
+            {
+                title: 'Motif appel',
+                dataIndex: 'callReason',
+                key: 'callReason',
+                width: 150,
+                render: (v) => v ? <Tag icon={<PushpinOutlined style={{ color: '#ff4d4f' }} />} color="default">{v}</Tag> : '—',
+            },
+            {
+                title: 'Statut appel',
+                dataIndex: 'callStatus',
+                key: 'callStatus',
+                width: 150,
+                render: (v) => {
+                    if (!v) return '—';
+                    const statusConfig = {
+                        'success': { color: 'green', text: 'Réussi' },
+                        'no_answer': { color: 'orange', text: 'Pas de réponse' },
+                        'wrong_number': { color: 'red', text: 'Mauvais numéro' },
+                        'callback': { color: 'blue', text: 'Rappel demandé' },
+                        'not_interested': { color: 'gray', text: 'Pas intéressé' },
+                        'postponed': { color: 'purple', text: 'Reporté' }
+                    };
+                    const config = statusConfig[v] || { color: 'default', text: v };
+                    return <Tag color={config.color}>{config.text}</Tag>;
+                },
+            },
+                    ] : []),
         {
             title: 'Actions',
             key: 'actions',
-            fixed: 'right',
-            width: (mode === 'declined' || mode === 'examiner') ? 120 : (mode === 'processed') ? 190 : (mode === 'calls') ? 440 : 190,
+            fixed: isBackofficeListPage ? undefined : 'right',
+            width: isBackofficeListPage ? 320 : ((mode === 'declined' || mode === 'examiner' || mode === 'processed') ? 120 : (mode === 'calls' ? 280 : 190)),
+            align: 'right',
             render: (_, record) => {
                 if (mode === 'create') {
-                    // Contrats à créer: Voir + PDF
-                    return (
-                        <Space>
-                            <Button icon={<EyeOutlined />} onClick={() => openDrawer(record)}>Voir</Button>
-                            <Button type="primary" icon={<FilePdfOutlined />} onClick={() => {
-                                openAndDownloadContract(record);
-                                moveToProcessed(record);
-                            }}>
+                    return actionsWrap(
+                        <>
+                            <Button
+                                icon={<EyeOutlined />}
+                                onClick={() => openDrawer(record)}
+                                {...getActionBtnProps('default')}
+                            >
+                                Voir
+                            </Button>
+                            <Button
+                                icon={<FilePdfOutlined />}
+                                onClick={() => openAndDownloadContract(record)}
+                                {...getActionBtnProps('success')}
+                            >
                                 Créer contrat
                             </Button>
-                        </Space>
+                        </>
                     );
                 }
 
                 if (mode === 'blocked') {
-                    return (
-                        <Space>
-                            <Button icon={<EyeOutlined />} onClick={() => openDrawer(record)}>
+                    return actionsWrap(
+                        <>
+                            <Button
+                                icon={<EyeOutlined />}
+                                onClick={() => openDrawer(record)}
+                                {...getActionBtnProps('default')}
+                            >
                                 Voir
                             </Button>
-                            <Button variant="solid" color="cyan" icon={<FileSearchOutlined />} onClick={() => {
-                                moveToExaminer(record);
-                            }}>
+                            <Button
+                                icon={<FileSearchOutlined />}
+                                onClick={() => moveToExaminer(record)}
+                                {...getActionBtnProps('warning')}
+                            >
                                 Vérifier
                             </Button>
-                            <Dropdown menu={{ 
-                                items: [
-                                    { key: 'address', label: '📍 Adresse incohérente', onClick: () => moveToCalls(record, 'Adresse incohérente') },
-                                    { key: 'phone', label: '📞 Téléphone invalide', onClick: () => moveToCalls(record, 'Téléphone invalide') },
-                                    { key: 'email', label: '📧 Email à confirmer', onClick: () => moveToCalls(record, 'Email à confirmer') },
-                                    { key: 'date', label: '📅 Date non standard', onClick: () => moveToCalls(record, 'Date non standard') },
-                                    { key: 'missing', label: '❓ Information manquante', onClick: () => askMissingInfo(record) },
-                                ]
-                            }}>
-                                <Button variant="solid" color="geekblue" icon={<PhoneOutlined />}>
+                            <Dropdown 
+                                menu={{ 
+                                    items: [
+                                        { key: 'address', label: '📍 Adresse incohérente', onClick: () => moveToCalls(record, 'Adresse incohérente') },
+                                        { key: 'phone', label: '📞 Téléphone invalide', onClick: () => moveToCalls(record, 'Téléphone invalide') },
+                                        { key: 'email', label: '📧 Email à confirmer', onClick: () => moveToCalls(record, 'Email à confirmer') },
+                                        { key: 'date', label: '📅 Date non standard', onClick: () => moveToCalls(record, 'Date non standard') },
+                                        { key: 'missing', label: '❓ Information manquante', onClick: () => moveToCalls(record, 'Information manquante') },
+                                    ]
+                                }}
+                            >
+                                <Button
+                                    icon={<PhoneOutlined />}
+                                    {...getActionBtnProps('info')}
+                                >
                                     Appeler
                                 </Button>
                             </Dropdown>
-                            <Button variant="solid" color="volcano" icon={<CloseCircleOutlined />} onClick={() => askDecline(record)}>
+                            <Button
+                                icon={<CloseCircleOutlined />}
+                                onClick={() => askDecline(record)}
+                                {...getActionBtnProps('danger')}
+                            >
                                 Décliner
                             </Button>
-                        </Space>
+                        </>
                     );
                 }
 
                 if (mode === 'examiner') {
-                    return (
-                        <Space>
-                            <Button variant="solid" color="cyan" icon={<FileSearchOutlined />} onClick={() => openDrawer(record)}>
+                    return actionsWrap(
+                        <>
+                            <Button
+                                icon={<FileSearchOutlined />}
+                                onClick={() => openDrawer(record)}
+                                {...getActionBtnProps('warning')}
+                            >
                                 Vérifier
                             </Button>
-                            <Dropdown menu={{ 
-                                items: [
-                                    { key: 'address', label: '📍 Adresse incohérente', onClick: () => moveToCalls(record, 'Adresse incohérente') },
-                                    { key: 'phone', label: '📞 Téléphone invalide', onClick: () => moveToCalls(record, 'Téléphone invalide') },
-                                    { key: 'email', label: '📧 Email à confirmer', onClick: () => moveToCalls(record, 'Email à confirmer') },
-                                    { key: 'date', label: '📅 Date non standard', onClick: () => moveToCalls(record, 'Date non standard') },
-                                    { key: 'missing', label: '❓ Information manquante', onClick: () => askMissingInfo(record) },
-                                ]
-                            }}>
-                                <Button variant="solid" color="geekblue" icon={<PhoneOutlined />}>
+                            <Dropdown 
+                                menu={{ 
+                                    items: [
+                                        { key: 'address', label: '📍 Adresse incohérente', onClick: () => moveToCalls(record, 'Adresse incohérente') },
+                                        { key: 'phone', label: '📞 Téléphone invalide', onClick: () => moveToCalls(record, 'Téléphone invalide') },
+                                        { key: 'email', label: '📧 Email à confirmer', onClick: () => moveToCalls(record, 'Email à confirmer') },
+                                        { key: 'date', label: '📅 Date non standard', onClick: () => moveToCalls(record, 'Date non standard') },
+                                        { key: 'missing', label: '❓ Information manquante', onClick: () => moveToCalls(record, 'Information manquante') },
+                                    ]
+                                }}
+                            >
+                                <Button
+                                    icon={<PhoneOutlined />}
+                                    {...getActionBtnProps('info')}
+                                >
                                     Appeler
                                 </Button>
                             </Dropdown>
-                            <Button variant="solid" color="volcano" icon={<CloseCircleOutlined />} onClick={() => askDecline(record)}>
+                            <Button
+                                icon={<CloseCircleOutlined />}
+                                onClick={() => askDecline(record)}
+                                {...getActionBtnProps('danger')}
+                            >
                                 Décliner
                             </Button>
-                        </Space>
+                        </>
                     );
                 }
 
@@ -492,22 +440,37 @@ export default function ContractTable({
                     const isRejected = record.decision === 'REJET';
                     const hasBeenCalled = record.callStatus;
                     
-                    return (
-                        <Space>
-                            <Button icon={<EyeOutlined />} onClick={() => openDrawer(record)}>Voir</Button>
+                    return actionsWrap(
+                        <>
+                            <Button
+                                icon={<EyeOutlined />}
+                                onClick={() => openDrawer(record)}
+                                {...getActionBtnProps('default')}
+                            >
+                                Voir
+                            </Button>
                             
                             {!hasBeenCalled ? (
-                                <Button type="primary" icon={<PhoneOutlined />} onClick={() => markAsCalled(record)}>
+                                <Button
+                                    icon={<PhoneOutlined />}
+                                    onClick={() => markAsCalled(record)}
+                                    {...getActionBtnProps('info')}
+                                >
                                     Appeler
                                 </Button>
                             ) : (
-                                <Dropdown menu={{ 
-                                    items: [
-                                        { key: 'recall', label: '🔄 Rappeler', onClick: () => markAsCalled(record) },
-                                        { key: 'reset', label: '↩️ Réinitialiser', onClick: () => resetCallStatus(record) },
-                                    ]
-                                }}>
-                                    <Button icon={<PhoneOutlined />}>
+                                <Dropdown 
+                                    menu={{ 
+                                        items: [
+                                            { key: 'recall', label: '🔄 Rappeler', onClick: () => markAsCalled(record) },
+                                            { key: 'reset', label: '↩️ Réinitialiser', onClick: () => resetCallStatus(record) },
+                                        ]
+                                    }}
+                                >
+                                    <Button
+                                        icon={<PhoneOutlined />}
+                                        {...getActionBtnProps('info')}
+                                    >
                                         Options appel
                                     </Button>
                                 </Dropdown>
@@ -515,41 +478,65 @@ export default function ContractTable({
                             
                             {!isRejected && (
                                 <Button 
-                                    type="primary" 
-                                    icon={<PlusCircleOutlined />} 
+                                    icon={<PlusCircleOutlined />}
                                     onClick={() => moveToToCreate(record)}
                                     disabled={hasBeenCalled !== 'success'}
+                                    style={{
+                                        ...getActionBtnProps('success').style,
+                                        background: hasBeenCalled !== 'success' ? '#d1d5db' : '#10b981',
+                                        borderColor: hasBeenCalled !== 'success' ? '#d1d5db' : '#10b981',
+                                        color: hasBeenCalled !== 'success' ? '#6b7280' : 'white',
+                                        cursor: hasBeenCalled !== 'success' ? 'not-allowed' : 'pointer'
+                                    }}
                                     title={hasBeenCalled === 'success' ? 'Appel réussi requis' : ''}
                                 >
                                     Créer contrat
                                 </Button>
                             )}
                             
-                            <Button danger icon={<CloseCircleOutlined />} onClick={() => askDecline(record)}>
+                            <Button
+                                icon={<CloseCircleOutlined />}
+                                onClick={() => askDecline(record)}
+                                {...getActionBtnProps('danger')}
+                            >
                                 Décliner
                             </Button>
-                        </Space>
+                        </>
                     );
                 }
 
                 if (mode === 'declined') {
-                    return (
-                        <Space>
-                            <Button icon={<EyeOutlined />} onClick={() => openDrawer(record)}>Voir</Button>
-                        </Space>
+                    return actionsWrap(
+                        <>
+                            <Button
+                                icon={<EyeOutlined />}
+                                onClick={() => openDrawer(record)}
+                                {...getActionBtnProps('default')}
+                            >
+                                Voir
+                            </Button>
+                        </>
                     );
                 }
 
                 if (mode === 'processed') {
-                    return (
-                        <Space>
-                            <Button icon={<EyeOutlined />} onClick={() => openDrawer(record)}>Voir</Button>
-                            <Button type="primary" icon={<FilePdfOutlined />} onClick={() => {
-                                openAndDownloadContract(record);
-                            }}>
+                    return actionsWrap(
+                        <>
+                            <Button
+                                icon={<EyeOutlined />}
+                                onClick={() => openDrawer(record)}
+                                {...getActionBtnProps('default')}
+                            >
+                                Voir
+                            </Button>
+                            <Button
+                                icon={<FilePdfOutlined />}
+                                onClick={() => openAndDownloadContract(record)}
+                                {...getActionBtnProps('success')}
+                            >
                                 Télécharger PDF
                             </Button>
-                        </Space>
+                        </>
                     );
                 }
 
@@ -564,24 +551,86 @@ export default function ContractTable({
 
     return (
         <>
-            {contextHolder}
-            <div style={{ marginBottom: 20, marginTop: 25, display:'flex', gap: 90, alignItems:'center' }}>
-                <h3 style={{ margin: 0 }}>{title}</h3>
+            <div style={isBackofficeListPage ? {
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 16,
+                marginBottom: 16,
+                marginTop: 8,
+                flexWrap: 'wrap'
+            } : {
+                marginBottom: 20,
+                marginTop: 25,
+                display: 'flex',
+                gap: 90,
+                alignItems: 'center'
+            }}>
+                <Typography.Title level={3} style={isBackofficeListPage ? { margin: 0, fontWeight: 700, color: '#111827' } : { margin: 0 }}>
+                    {title}
+                </Typography.Title>
+
                 <Search
                     placeholder="Rechercher (nom, email, ville, n°…)"
                     onSearch={setQuery}
                     onChange={(e) => setQuery(e.target.value)}
                     allowClear
-                    style={{ width: 360 }}
+                    style={{ width: isBackofficeListPage ? 420 : 360, maxWidth: '100%' }}
                 />
             </div>
 
-            <Table
-                rowKey={(r) => r.numeroContrat}
-                columns={columns}
-                dataSource={filtered}
-                pagination={{ pageSize: 10 }}
-            />
+            <Card
+                bordered={false}
+                style={isBackofficeListPage ? {
+                    borderRadius: 12,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                    overflow: 'hidden'
+                } : undefined}
+                styles={isBackofficeListPage ? { body: { padding: 0 } } : undefined}
+            >
+                <Table
+                    rowKey={(r) => r.numeroContrat}
+                    columns={columns}
+                    dataSource={filtered}
+                    pagination={{ pageSize: 10 }}
+                    size={isBackofficeListPage ? 'middle' : 'large'}
+                    className={isBackofficeListPage ? 'bo-contract-table' : undefined}
+                    scroll={isBackofficeListPage ? { x: 1100 } : undefined}
+                />
+            </Card>
+
+            {isBackofficeListPage && (
+                <style>{`
+                    .bo-actions-wrap {
+                        display: flex;
+                        flex-wrap: nowrap;
+                        gap: 6px;
+                        justify-content: flex-start;
+                        max-width: 400px;
+                        white-space: nowrap;
+                        width: 100%;
+                    }
+                    .bo-actions-wrap .ant-btn {
+                        flex: 0 0 auto;
+                    }
+                    .bo-contract-table .ant-table-thead > tr > th {
+                        background: #f9fafb !important;
+                        color: #374151;
+                        font-weight: 600;
+                    }
+                    .bo-contract-table .ant-table-tbody > tr:hover > td {
+                        background: #f0fdf4 !important;
+                    }
+                    .bo-contract-table .ant-table-cell {
+                        border-bottom: 1px solid #f3f4f6;
+                    }
+                    .bo-contract-table .ant-table-cell:last-child {
+                        text-align: left !important;
+                        padding-left: 16px !important;
+                        min-width: 280px;
+                    }
+                `}</style>
+            )}
 
             <ContractDrawer open={drawerOpen} onClose={closeDrawer} record={selected} />
 
@@ -603,33 +652,6 @@ export default function ContractTable({
                         rules={[{ required: true, message: 'Le motif est obligatoire' }]}
                     >
                         <Input.TextArea rows={4} maxLength={500} showCount placeholder="Ex: Email invalide, Téléphone non conforme, Adresse incohérente..." />
-                    </Form.Item>
-                </Form>
-            </Modal>
-
-            <Modal
-                title="Information manquante"
-                open={missingInfoOpen}
-                onOk={confirmMissingInfo}
-                onCancel={() => setMissingInfoOpen(false)}
-                okText="Ajouter à appeler"
-                cancelText="Annuler"
-            >
-                <Typography.Paragraph>
-                    Merci d'indiquer <strong>quelle information manque</strong>. Ceci aidera le conseiller à se préparer pour l'appel.
-                </Typography.Paragraph>
-                <Form form={missingInfoForm} layout="vertical">
-                    <Form.Item
-                        name="missingInfo"
-                        label="Information manquante"
-                        rules={[{ required: true, message: 'Veuillez préciser l\'information manquante' }]}
-                    >
-                        <Input.TextArea 
-                            rows={3} 
-                            maxLength={200} 
-                            showCount 
-                            placeholder="Ex: Numéro de compte bancaire, Revenu mensuel, Justificatif de domicile..." 
-                        />
                     </Form.Item>
                 </Form>
             </Modal>
@@ -706,6 +728,7 @@ export default function ContractTable({
                     )}
                 </Form>
             </Modal>
+
         </>
     );
 }
