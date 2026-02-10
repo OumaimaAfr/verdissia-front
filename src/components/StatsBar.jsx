@@ -78,6 +78,10 @@ export default function StatsBar({ totals }) {
     const { pathname } = useLocation();
     const isDashboard = pathname === '/backoffice/dashboard';
 
+    const handleCardClick = (route) => {
+        navigate(route);
+    };
+
     const {
         toCreate = 0,
         toReview = 0,
@@ -198,7 +202,7 @@ export default function StatsBar({ totals }) {
                                 value={totals.toCreate}
                                 icon={<FileTextOutlined style={{ color: 'white', fontSize: '20px' }} />}
                                 color="linear-gradient(135deg, #10b981 0%, #059669 100%)"
-                                onClick={() => handleCardClick('Contrats à créer')}
+                                onClick={() => handleCardClick("/backoffice")}
                             />
                         </Col>
                         <Col xs={24} sm={12} lg={6}>
@@ -207,7 +211,7 @@ export default function StatsBar({ totals }) {
                                 value={totals.toReview}
                                 icon={<ExclamationCircleOutlined style={{ color: 'white', fontSize: '20px' }} />}
                                 color="linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-                                onClick={() => handleCardClick('Cas bloqués')}
+                                onClick={() => handleCardClick("/backoffice/blocked")}
                             />
                         </Col>
                         <Col xs={24} sm={12} lg={6}>
@@ -216,7 +220,7 @@ export default function StatsBar({ totals }) {
                                 value={totals.toExamine}
                                 icon={<SearchOutlined style={{ color: 'white', fontSize: '20px' }} />}
                                 color="linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
-                                onClick={() => handleCardClick('Cas à examiner')}/>
+                                onClick={() => handleCardClick("/backoffice/examiner")}/>
                         </Col>
                         <Col xs={24} sm={12} lg={6}>
                             <StatsCard
@@ -224,7 +228,7 @@ export default function StatsBar({ totals }) {
                                 value={totals.toCall}
                                 icon={<PhoneOutlined style={{ color: 'white', fontSize: '20px' }} />}
                                 color="linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)"
-                                onClick={() => handleCardClick('Clients à appeler')}/>
+                                onClick={() => handleCardClick("/backoffice/calls")}/>
                         </Col>
                         <Col xs={24} sm={12} lg={6}>
                             <StatsCard
@@ -232,7 +236,7 @@ export default function StatsBar({ totals }) {
                                 value={totals.declined}
                                 icon={<CloseCircleOutlined style={{ color: 'white', fontSize: '20px' }} />}
                                 color="linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
-                                onClick={() => handleCardClick('Cas déclinés')}/>
+                                onClick={() => handleCardClick("/backoffice/declined")}/>
                         </Col>
                         <Col xs={24} sm={12} lg={6}>
                             <StatsCard
@@ -240,7 +244,7 @@ export default function StatsBar({ totals }) {
                                 value={totals.processed}
                                 icon={<CheckCircleOutlined style={{ color: 'white', fontSize: '20px' }} />}
                                 color="linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)"
-                                onClick={() => handleCardClick('Contrats traités')}
+                                onClick={() => handleCardClick("/backoffice/processed")}
                             />
                         </Col>
                     </Row>

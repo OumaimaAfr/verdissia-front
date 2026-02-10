@@ -708,9 +708,7 @@ export default function ContractTable({
                         pageSize: 10,
                         current: currentPage,
                         onChange: (page) => setCurrentPage(page),
-                        showSizeChanger: false,
-                        showQuickJumper: true,
-                        showTotal: (total, range) => `${range[0]}-${range[1]} sur ${total} contrats`
+                        showSizeChanger: false
                     }}
                     size={isBackofficeListPage ? 'middle' : 'large'}
                     className={isBackofficeListPage ? 'bo-contract-table' : undefined}

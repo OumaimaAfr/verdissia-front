@@ -1786,10 +1786,6 @@ button[type="submit"] {
   border: 1px solid rgb(238, 242, 247);
   box-shadow: rgba(16, 24, 40, 0.04) 0px 1px 2px, rgba(2, 6, 23, 0.08) 0px 10px 30px;
 
-  .ant-input-prefix {
-    margin-right: 10px;
-  }
-
   .ant-alert {
     margin-bottom: -23px;
   }
@@ -1941,4 +1937,8 @@ button[type="submit"] {
 * {
   scrollbar-width: thin;
   scrollbar-color: #2ecc71 transparent;
+}
+
+.ant-input-prefix {
+    margin-right: 10px !important;
 }

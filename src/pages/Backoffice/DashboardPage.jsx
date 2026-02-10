@@ -187,26 +187,22 @@ export default function DashboardPage() {
         // Rediriger vers la page appropriée selon le type de carte
         switch(cardType) {
             case 'Contrats à créer':
-                navigate('/backoffice/create');
+                navigate("/backoffice");
                 break;
             case 'Cas bloqués':
-                navigate('/backoffice/blocked');
+                navigate("/backoffice/blocked");
                 break;
             case 'Clients à appeler':
-                navigate('/backoffice/calls');
+                navigate("/backoffice/calls");
                 break;
             case 'Cas à examiner':
-                navigate('/backoffice/examiner');
+                navigate("/backoffice/examiner");
                 break;
             case 'Contrats traités':
-                navigate('/backoffice/processed');
+                navigate("/backoffice/processed");
                 break;
             case 'Cas déclinés':
-                navigate('/backoffice/declined');
-                break;
-            case 'Gain d\'efficacité LLM':
-                // Scroller vers la section temps de traitement
-                document.getElementById('processing-time-section')?.scrollIntoView({ behavior: 'smooth' });
+                navigate("/backoffice/declined");
                 break;
             default:
                 console.log(`Carte cliquée: ${cardType}`);
@@ -221,7 +217,7 @@ export default function DashboardPage() {
             const pageNumber = Math.floor(contractIndex / 10) + 1; // 10 contrats par page
             return { 
                 name: 'Contrats à créer', 
-                path: '/backoffice/create', 
+                path: "/backoffice",
                 color: '#10b981',
                 pageNumber,
                 contractIndex
@@ -233,7 +229,7 @@ export default function DashboardPage() {
             const pageNumber = Math.floor(contractIndex / 10) + 1;
             return { 
                 name: 'Cas bloqués', 
-                path: '/backoffice/blocked', 
+                path: "/backoffice/blocked",
                 color: '#f59e0b',
                 pageNumber,
                 contractIndex
@@ -245,7 +241,7 @@ export default function DashboardPage() {
             const pageNumber = Math.floor(contractIndex / 10) + 1;
             return { 
                 name: 'Cas à examiner', 
-                path: '/backoffice/examiner', 
+                path: "/backoffice/examiner",
                 color: '#3b82f6',
                 pageNumber,
                 contractIndex
@@ -262,8 +258,7 @@ export default function DashboardPage() {
         sessionStorage.setItem('highlightContract', latestContract.numeroContrat);
         sessionStorage.setItem('scrollToContract', 'true');
         sessionStorage.setItem('targetPage', section.pageNumber.toString());
-        
-        // Utiliser navigate au lieu de window.location.href
+
         navigate(section.path);
     };
 
@@ -435,7 +430,7 @@ export default function DashboardPage() {
                         // Rediriger vers la section appropriée avec mise en évidence
                         sessionStorage.setItem('highlightContract', reminderData.contractId);
                         sessionStorage.setItem('scrollToContract', 'true');
-                        sessionStorage.setItem('targetPage', '1'); // Retour à la première page
+                        sessionStorage.setItem('targetPage', reminderData.section.pageNumber.toString()); // Retour à la première page
                         navigate(reminderData.section.path);
                     } catch (error) {
                         console.error('Erreur lors de la redirection:', error);
@@ -679,7 +674,7 @@ export default function DashboardPage() {
                     </Space>
                 }
                 open={newContractModalVisible}
-                onCancel={handlePostponeProcessing}
+                onCancel={() => setNewContractModalVisible(false)}
                 footer={[
                     <Button key="postpone" onClick={handlePostponeProcessing}>
                         Reporter
@@ -842,6 +837,14 @@ export default function DashboardPage() {
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
                     <StatsCard
+                        title="Cas à examiner"
+                        value={totals.toExamine}
+                        icon={<SearchOutlined style={{ color: 'white', fontSize: '20px' }} />}
+                        color="linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
+                        onClick={() => handleCardClick('Cas à examiner')}/>
+                </Col>
+                <Col xs={24} sm={12} lg={6}>
+                    <StatsCard
                         title="Clients à appeler"
                         value={totals.toCall}
                         icon={<PhoneOutlined style={{ color: 'white', fontSize: '20px' }} />}
@@ -851,11 +854,11 @@ export default function DashboardPage() {
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
                     <StatsCard
-                        title="Cas à examiner"
-                        value={totals.toExamine}
-                        icon={<SearchOutlined style={{ color: 'white', fontSize: '20px' }} />}
-                        color="linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
-                        onClick={() => handleCardClick('Cas à examiner')}
+                        title="Cas déclinés"
+                        value={totals.declined}
+                        icon={<CloseCircleOutlined style={{ color: 'white', fontSize: '20px' }} />}
+                        color="linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
+                        onClick={() => handleCardClick('Cas déclinés')}
                     />
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
@@ -865,15 +868,6 @@ export default function DashboardPage() {
                         icon={<CheckCircleOutlined style={{ color: 'white', fontSize: '20px' }} />}
                         color="linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)"
                         onClick={() => handleCardClick('Contrats traités')}
-                    />
-                </Col>
-                <Col xs={24} sm={12} lg={6}>
-                    <StatsCard
-                        title="Cas déclinés"
-                        value={totals.declined}
-                        icon={<CloseCircleOutlined style={{ color: 'white', fontSize: '20px' }} />}
-                        color="linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
-                        onClick={() => handleCardClick('Cas déclinés')}
                     />
                 </Col>
             </Row>
