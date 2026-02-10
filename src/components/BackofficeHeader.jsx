@@ -96,8 +96,9 @@ function BackofficeHeader() {
                     // Vérifier si le rappel doit être déclenché (fenêtre de 5 minutes)
                     const timeDiff = reminderTime.diff(now, 'minute');
                     console.log(`🔍 Header - Différence temps: ${timeDiff} minutes`);
+                    console.log(`🔍 Header - Condition check: ${timeDiff} >= -1 && ${timeDiff} <= 2 = ${timeDiff >= -1 && timeDiff <= 2}`);
                     
-                    if (timeDiff >= -2 && timeDiff <= 5) {
+                    if (timeDiff >= -1 && timeDiff <= 2) {
                         console.log('🔔 Header - DÉCLENCHEMENT du rappel pour:', reminderData.contractId);
                         showContractReminderNotification(reminderData);
                         
@@ -105,6 +106,8 @@ function BackofficeHeader() {
                         const updatedReminders = reminders.filter(r => r.contractId !== reminderData.contractId);
                         localStorage.setItem('contractReminders', JSON.stringify(updatedReminders));
                         console.log('🔍 Header - Rappel supprimé de la liste');
+                    } else {
+                        console.log(`🔍 Header - Rappel ${reminderData.contractId} pas encore déclenché (timeDiff: ${timeDiff})`);
                     }
                 });
             } catch (error) {
@@ -157,11 +160,15 @@ function BackofficeHeader() {
         const showContractReminderNotification = (reminderData) => {
             try {
                 console.log('🔍 Header - Affichage de la pop-up pour:', reminderData.contractId);
+                console.log('🔍 Header - Données complètes du rappel:', reminderData);
                 
                 // Afficher une pop-up d'alerte visible
                 const clientName = reminderData.contractInfo ? 
                     `${reminderData.contractInfo.prenom || ''} ${reminderData.contractInfo.nom || ''}`.trim() : 
                     'Client';
+                
+                console.log('🔍 Header - Nom du client extrait:', clientName);
+                console.log('🔍 Header - Création de la pop-up...');
                 
                 // Créer une pop-up d'alerte personnalisée
                 const alertDiv = document.createElement('div');
@@ -207,6 +214,8 @@ function BackofficeHeader() {
                     ">OK</button>
                 `;
                 
+                console.log('🔍 Header - Pop-up créée, ajout au DOM...');
+                
                 // Ajouter l'animation CSS
                 const style = document.createElement('style');
                 style.textContent = `
@@ -220,6 +229,8 @@ function BackofficeHeader() {
                 // Ajouter la pop-up au body
                 document.body.appendChild(alertDiv);
                 
+                console.log('🔍 Header - Pop-up ajoutée au body !');
+                
                 // Son de notification (si disponible)
                 try {
                     const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
@@ -230,6 +241,7 @@ function BackofficeHeader() {
                 setTimeout(() => {
                     if (alertDiv.parentElement) {
                         alertDiv.remove();
+                        console.log('🔍 Header - Pop-up retirée automatiquement');
                     }
                 }, 10000);
                 
@@ -261,6 +273,9 @@ function BackofficeHeader() {
             console.log('=== VÉRIFICATION MANUELLE DES RAPPELS ===');
             checkContractReminders();
         };
+        
+        // Ajouter la fonction de pop-up pour les tests
+        window.showContractReminderNotification = showContractReminderNotification;
         
         console.log('💡 Header - Pour vérifier les rappels manuellement, tapez: checkReminders() dans la console');
 
