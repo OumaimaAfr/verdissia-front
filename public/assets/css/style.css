@@ -1942,3 +1942,9 @@ button[type="submit"] {
 .ant-input-prefix {
     margin-right: 10px !important;
 }
+
+.ant-modal-root {
+    button {
+        outline: none !important;
+    }
+}
