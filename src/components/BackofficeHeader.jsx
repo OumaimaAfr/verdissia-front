@@ -317,7 +317,7 @@ function BackofficeHeader() {
             label: 'Se déconnecter',
             onClick: () => {
                 logoutUser();
-                window.location.href = '/backoffice/login';
+                navigate('/backoffice/login');
             },
             danger: true,
         },
@@ -420,7 +420,7 @@ function BackofficeHeader() {
                                         <div
                                             key={notif.contractId}
                                             onClick={() => {
-                                                window.location.href = '/backoffice/calls';
+                                                navigate('/backoffice/calls');
                                             }}
                                             style={{
                                                 cursor: 'pointer',
