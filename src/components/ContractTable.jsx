@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Table, Tag, Space, Button, Input, Dropdown, message, Modal, Form, Typography, Card, Select, DatePicker } from 'antd';
-import { EyeOutlined, PhoneOutlined, FilePdfOutlined, CloseCircleOutlined, FileSearchOutlined, MoreOutlined, PlusCircleOutlined, PushpinOutlined } from '@ant-design/icons';
+import { EyeOutlined, PhoneOutlined, FilePdfOutlined, CloseCircleOutlined, FileSearchOutlined, MoreOutlined, PlusCircleOutlined, PushpinOutlined, BellOutlined } from '@ant-design/icons';
 import ContractDrawer from './ContractDrawer';
 import { openAndDownloadContract } from '../utils/contractPdf';
 import { setState as setWorkflowState, STATES } from '../utils/workflowStore';
@@ -29,10 +29,13 @@ export default function ContractTable({
 }) {
     const { pathname } = useLocation();
     const isBackofficeListPage = pathname.startsWith('/backoffice') && pathname !== '/backoffice/dashboard';
+    const tableRef = useRef(null);
 
     const [query, setQuery] = useState('');
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [selected, setSelected] = useState(null);
+    const [highlightedContractId, setHighlightedContractId] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const [declineOpen, setDeclineOpen] = useState(false);
     const [declineTarget, setDeclineTarget] = useState(null);
@@ -49,6 +52,87 @@ export default function ContractTable({
             return hay.includes(q);
         });
     }, [data, query]);
+
+    // Effet pour gérer la mise en évidence et le défilement
+    useEffect(() => {
+        if (isBackofficeListPage) {
+            const contractToHighlight = sessionStorage.getItem('highlightContract');
+            const shouldScroll = sessionStorage.getItem('scrollToContract');
+            const targetPage = sessionStorage.getItem('targetPage');
+            
+            if (contractToHighlight && shouldScroll === 'true') {
+                setHighlightedContractId(contractToHighlight);
+                
+                // Définir la page cible si spécifiée
+                if (targetPage) {
+                    const page = parseInt(targetPage, 10);
+                    if (!isNaN(page) && page > 0) {
+                        console.log(`🎯 ContractTable: Définition de la page cible: ${page}`);
+                        setCurrentPage(page);
+                    }
+                }
+                
+                // Attendre que le tableau soit rendu et que la pagination soit appliquée
+                setTimeout(() => {
+                    const element = document.querySelector(`[data-row-key="${contractToHighlight}"]`);
+                    if (element) {
+                        console.log(`🎯 ContractTable: Élément trouvé pour ${contractToHighlight}`);
+                        element.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center' 
+                        });
+                        
+                        // Ajouter un effet de mise en évidence amélioré
+                        element.style.backgroundColor = '#fff7e6';
+                        element.style.borderLeft = '4px solid #fa8c16';
+                        element.style.boxShadow = '0 0 10px rgba(250, 140, 22, 0.3)';
+                        element.style.transition = 'all 0.3s ease';
+                        element.style.position = 'relative';
+                        
+                        // Ajouter une icône de notification
+                        const iconContainer = document.createElement('div');
+                        iconContainer.style.cssText = `
+                            position: absolute;
+                            top: -8px;
+                            right: -8px;
+                            background: #fa8c16;
+                            color: white;
+                            border-radius: 50%;
+                            width: 24px;
+                            height: 24px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 12px;
+                            z-index: 1000;
+                            animation: pulse 2s infinite;
+                            box-shadow: 0 2px 8px rgba(250, 140, 22, 0.4);
+                        `;
+                        iconContainer.innerHTML = '🔔';
+                        element.style.position = 'relative';
+                        element.appendChild(iconContainer);
+                        
+                        // Retirer la mise en évidence après 5 secondes
+                        setTimeout(() => {
+                            element.style.backgroundColor = '';
+                            element.style.borderLeft = '';
+                            element.style.boxShadow = '';
+                            if (iconContainer.parentNode) {
+                                iconContainer.parentNode.removeChild(iconContainer);
+                            }
+                        }, 5000);
+                    } else {
+                        console.log(`🎯 ContractTable: Élément NON trouvé pour ${contractToHighlight}`);
+                    }
+                    
+                    // Nettoyer le sessionStorage
+                    sessionStorage.removeItem('highlightContract');
+                    sessionStorage.removeItem('scrollToContract');
+                    sessionStorage.removeItem('targetPage');
+                }, 1500); // Augmenté à 1500ms pour laisser le temps à la pagination de s'appliquer
+            }
+        }
+    }, [isBackofficeListPage, filtered]);
 
     const openDrawer = (record) => { setSelected(record); setDrawerOpen(true); };
     const closeDrawer = () => { setDrawerOpen(false); setSelected(null); };
@@ -616,13 +700,30 @@ export default function ContractTable({
                 styles={isBackofficeListPage ? { body: { padding: 0 } } : undefined}
             >
                 <Table
+                    ref={tableRef}
                     rowKey={(r) => r.numeroContrat}
                     columns={columns}
                     dataSource={filtered}
-                    pagination={{ pageSize: 10 }}
+                    pagination={{ 
+                        pageSize: 10,
+                        current: currentPage,
+                        onChange: (page) => setCurrentPage(page),
+                        showSizeChanger: false,
+                        showQuickJumper: true,
+                        showTotal: (total, range) => `${range[0]}-${range[1]} sur ${total} contrats`
+                    }}
                     size={isBackofficeListPage ? 'middle' : 'large'}
                     className={isBackofficeListPage ? 'bo-contract-table' : undefined}
                     scroll={isBackofficeListPage ? { x: 1100 } : undefined}
+                    rowClassName={(record) => {
+                        if (highlightedContractId === record.numeroContrat) {
+                            return 'highlighted-row';
+                        }
+                        return '';
+                    }}
+                    onRow={(record) => ({
+                        'data-row-key': record.numeroContrat,
+                    })}
                 />
             </Card>
 
@@ -655,6 +756,22 @@ export default function ContractTable({
                         text-align: left !important;
                         padding-left: 16px !important;
                         min-width: 280px;
+                    }
+                    .highlighted-row {
+                        background-color: #fff7e6 !important;
+                        border-left: 4px solid #fa8c16 !important;
+                        animation: highlightPulse 2s ease-in-out;
+                        position: relative !important;
+                    }
+                    @keyframes highlightPulse {
+                        0% { background-color: #fff7e6; }
+                        50% { background-color: #ffe7ba; }
+                        100% { background-color: #fff7e6; }
+                    }
+                    @keyframes pulse {
+                        0% { transform: scale(1); }
+                        50% { transform: scale(1.1); }
+                        100% { transform: scale(1); }
                     }
                 `}</style>
             )}

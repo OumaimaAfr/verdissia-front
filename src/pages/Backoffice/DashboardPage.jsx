@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Row, Col, Card, Statistic, Modal, Button, Typography, Space } from 'antd';
+import { Row, Col, Card, Statistic, Modal, Button, Typography, Space, Form, DatePicker, message } from 'antd';
 import {
     PieChart, Pie, Cell,
     BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -7,6 +7,7 @@ import {
 } from 'recharts';
 import useBackofficeBuckets from '../../hooks/useBackofficeBuckets.js';
 import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
 import { 
     FileTextOutlined, 
     ExclamationCircleOutlined, 
@@ -129,6 +130,9 @@ export default function DashboardPage() {
     const { toCreate, blocked, calls, examiner, declined, processed, totals } = useBackofficeBuckets();
     const [newContractModalVisible, setNewContractModalVisible] = useState(false);
     const [latestContract, setLatestContract] = useState(null);
+    const [postponeModalVisible, setPostponeModalVisible] = useState(false);
+    const [postponeForm] = Form.useForm();
+    const navigate = useNavigate();
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -183,22 +187,22 @@ export default function DashboardPage() {
         // Rediriger vers la page appropriée selon le type de carte
         switch(cardType) {
             case 'Contrats à créer':
-                window.location.href = '/backoffice/create';
+                navigate('/backoffice/create');
                 break;
             case 'Cas bloqués':
-                window.location.href = '/backoffice/blocked';
+                navigate('/backoffice/blocked');
                 break;
             case 'Clients à appeler':
-                window.location.href = '/backoffice/calls';
+                navigate('/backoffice/calls');
                 break;
             case 'Cas à examiner':
-                window.location.href = '/backoffice/examiner';
+                navigate('/backoffice/examiner');
                 break;
             case 'Contrats traités':
-                window.location.href = '/backoffice/processed';
+                navigate('/backoffice/processed');
                 break;
             case 'Cas déclinés':
-                window.location.href = '/backoffice/declined';
+                navigate('/backoffice/declined');
                 break;
             case 'Gain d\'efficacité LLM':
                 // Scroller vers la section temps de traitement
@@ -212,27 +216,322 @@ export default function DashboardPage() {
     // Fonction pour déterminer dans quelle section se trouve le contrat
     const getContractSection = (contract) => {
         if (toCreate.find(c => c.numeroContrat === contract.numeroContrat)) {
-            return { name: 'Contrats à créer', path: '/backoffice/create', color: '#10b981' };
+            const sectionData = toCreate;
+            const contractIndex = sectionData.findIndex(c => c.numeroContrat === contract.numeroContrat);
+            const pageNumber = Math.floor(contractIndex / 10) + 1; // 10 contrats par page
+            return { 
+                name: 'Contrats à créer', 
+                path: '/backoffice/create', 
+                color: '#10b981',
+                pageNumber,
+                contractIndex
+            };
         }
         if (blocked.find(c => c.numeroContrat === contract.numeroContrat)) {
-            return { name: 'Cas bloqués', path: '/backoffice/blocked', color: '#f59e0b' };
+            const sectionData = blocked;
+            const contractIndex = sectionData.findIndex(c => c.numeroContrat === contract.numeroContrat);
+            const pageNumber = Math.floor(contractIndex / 10) + 1;
+            return { 
+                name: 'Cas bloqués', 
+                path: '/backoffice/blocked', 
+                color: '#f59e0b',
+                pageNumber,
+                contractIndex
+            };
         }
         if (examiner.find(c => c.numeroContrat === contract.numeroContrat)) {
-            return { name: 'Cas à examiner', path: '/backoffice/examiner', color: '#3b82f6' };
+            const sectionData = examiner;
+            const contractIndex = sectionData.findIndex(c => c.numeroContrat === contract.numeroContrat);
+            const pageNumber = Math.floor(contractIndex / 10) + 1;
+            return { 
+                name: 'Cas à examiner', 
+                path: '/backoffice/examiner', 
+                color: '#3b82f6',
+                pageNumber,
+                contractIndex
+            };
         }
-        return { name: 'Non trouvé', path: '#', color: '#6b7280' };
+        return { name: 'Non trouvé', path: '#', color: '#6b7280', pageNumber: 1, contractIndex: -1 };
     };
 
     // Fonction pour gérer le traitement immédiat
     const handleImmediateProcessing = () => {
         const section = getContractSection(latestContract);
-        window.location.href = section.path;
+        
+        // Stocker les informations du contrat à mettre en évidence
+        sessionStorage.setItem('highlightContract', latestContract.numeroContrat);
+        sessionStorage.setItem('scrollToContract', 'true');
+        sessionStorage.setItem('targetPage', section.pageNumber.toString());
+        
+        // Utiliser navigate au lieu de window.location.href
+        navigate(section.path);
     };
 
     // Fonction pour reporter le traitement
     const handlePostponeProcessing = () => {
         setNewContractModalVisible(false);
+        setPostponeModalVisible(true);
+        postponeForm.resetFields();
     };
+
+    // Fonction pour confirmer le report
+    const confirmPostpone = async () => {
+        try {
+            const { reminderTime } = await postponeForm.validateFields();
+            
+            // Stocker les informations du contrat à rappeler
+            const reminderData = {
+                contractId: latestContract.numeroContrat,
+                contractInfo: latestContract,
+                reminderTime: reminderTime.toISOString(),
+                section: getContractSection(latestContract),
+                createdAt: dayjs().toISOString()
+            };
+            
+            // Ajouter à la liste des rappels
+            const existingReminders = JSON.parse(localStorage.getItem('contractReminders') || '[]');
+            existingReminders.push(reminderData);
+            localStorage.setItem('contractReminders', JSON.stringify(existingReminders));
+            
+            // Programmer la notification
+            scheduleReminder(reminderData);
+            
+            setPostponeModalVisible(false);
+            message.success(`Rappel programmé pour ${reminderTime.format('DD/MM/YYYY à HH:mm')}`);
+            
+            // Pour tester : vérifier immédiatement si le rappel est bien programmé
+            console.log('=== TEST RAPPEL ===');
+            console.log('Rappels actuels:', JSON.parse(localStorage.getItem('contractReminders') || '[]'));
+            console.log('Heure actuelle:', dayjs().format('DD/MM/YYYY HH:mm:ss'));
+            console.log('Heure du rappel:', reminderTime.format('DD/MM/YYYY HH:mm:ss'));
+            console.log('Différence (minutes):', reminderTime.diff(dayjs(), 'minute'));
+            console.log('==================');
+            
+            // Test immédiat si le rappel est dans moins de 2 minutes
+            const timeDiff = reminderTime.diff(dayjs(), 'minute');
+            if (timeDiff <= 2 && timeDiff >= 0) {
+                console.log('⚠️ Test immédiat du rappel dans 2 secondes...');
+                setTimeout(() => {
+                    console.log('🔔 Test de déclenchement immédiat');
+                    checkPendingReminders();
+                }, 2000);
+            }
+            
+        } catch (error) {
+            console.error('Erreur lors de la programmation du rappel:', error);
+            message.error('Erreur lors de la programmation du rappel');
+        }
+    };
+
+    // Fonction pour programmer un rappel
+    const scheduleReminder = (reminderData) => {
+        // Ne plus utiliser setTimeout pour les longs délais
+        // La vérification se fera périodiquement
+        console.log('Rappel programmé pour:', reminderData.reminderTime);
+    };
+
+    // Fonction pour vérifier les rappels en attente
+    const checkPendingReminders = () => {
+        try {
+            const reminders = JSON.parse(localStorage.getItem('contractReminders') || '[]');
+            const now = dayjs();
+            
+            console.log('Vérification des rappels - Heure actuelle:', now.format('DD/MM/YYYY HH:mm:ss'));
+            console.log('Rappels en attente:', reminders.length);
+            
+            if (reminders.length === 0) {
+                console.log('Aucun rappel en attente');
+                return;
+            }
+            
+            reminders.forEach((reminderData, index) => {
+                const reminderTime = dayjs(reminderData.reminderTime);
+                console.log(`Rappel ${index + 1} (${reminderData.contractId}): ${reminderTime.format('DD/MM/YYYY HH:mm:ss')}`);
+                
+                // Vérifier si le rappel doit être déclenché (fenêtre de 5 minutes)
+                const timeDiff = reminderTime.diff(now, 'minute');
+                console.log(`Différence temps: ${timeDiff} minutes (rappel - maintenant)`);
+                
+                // CORRECTION: Si timeDiff est négatif, le rappel est dans le passé
+                // Si timeDiff est positif, le rappel est dans le futur
+                // On déclenche si le rappel est passé ou dans les 2 prochaines minutes
+                if (timeDiff <= 2) {
+                    console.log('🔔 DÉCLENCHEMENT du rappel pour:', reminderData.contractId);
+                    console.log(`Raison: timeDiff=${timeDiff} <= 2 (rappel passé ou imminent)`);
+                    showReminderPopup(reminderData);
+                    
+                    // Retirer le rappel de la liste
+                    const updatedReminders = reminders.filter(r => r.contractId !== reminderData.contractId);
+                    localStorage.setItem('contractReminders', JSON.stringify(updatedReminders));
+                    console.log('Rappel supprimé de la liste');
+                } else {
+                    console.log(`Rappel pas encore déclenché: ${timeDiff} minutes restantes`);
+                }
+            });
+        } catch (error) {
+            console.error('Erreur lors de la vérification des rappels:', error);
+        }
+    };
+
+    // Vérification périodique des rappels
+    useEffect(() => {
+        // Vérifier immédiatement au chargement
+        checkPendingReminders();
+        
+        // Configurer une vérification toutes les 30 secondes
+        const interval = setInterval(checkPendingReminders, 30000);
+        
+        return () => clearInterval(interval);
+    }, []);
+
+    // Fonction pour afficher la pop-up de rappel
+    const showReminderPopup = (reminderData) => {
+        try {
+            console.log('Affichage de la pop-up pour:', reminderData.contractId);
+            
+            Modal.info({
+                title: '🔔 Rappel de contrat à traiter',
+                width: 600,
+                content: (
+                    <div>
+                        <Typography.Paragraph>
+                            Vous avez un contrat en attente de traitement :
+                        </Typography.Paragraph>
+                        <Card size="small" style={{ marginBottom: 16 }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                <div>
+                                    <span style={{ color: '#6b7280', fontSize: '12px' }}>N° Dossier</span>
+                                    <div style={{ fontWeight: '600', fontSize: '14px' }}>{reminderData.contractInfo.numeroContrat}</div>
+                                </div>
+                                <div>
+                                    <span style={{ color: '#6b7280', fontSize: '12px' }}>Client</span>
+                                    <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                                        {reminderData.contractInfo.civilite} {reminderData.contractInfo.prenom} {reminderData.contractInfo.nom}
+                                    </div>
+                                </div>
+                                <div>
+                                    <span style={{ color: '#6b7280', fontSize: '12px' }}>Section</span>
+                                    <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                                        <span style={{ color: reminderData.section.color }}>
+                                            {reminderData.section.name}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span style={{ color: '#6b7280', fontSize: '12px' }}>Énergie</span>
+                                    <div style={{ fontWeight: '600', fontSize: '14px' }}>{reminderData.contractInfo.typeEnergie}</div>
+                                </div>
+                            </div>
+                        </Card>
+                        <Typography.Paragraph style={{ marginBottom: 16 }}>
+                            Cliquez sur "Traiter maintenant" pour accéder directement au contrat.
+                        </Typography.Paragraph>
+                    </div>
+                ),
+                okText: 'Traiter maintenant',
+                onOk: () => {
+                    try {
+                        console.log('Redirection vers:', reminderData.section.path);
+                        // Rediriger vers la section appropriée avec mise en évidence
+                        sessionStorage.setItem('highlightContract', reminderData.contractId);
+                        sessionStorage.setItem('scrollToContract', 'true');
+                        sessionStorage.setItem('targetPage', '1'); // Retour à la première page
+                        navigate(reminderData.section.path);
+                    } catch (error) {
+                        console.error('Erreur lors de la redirection:', error);
+                        // Fallback : utiliser window.location.href
+                        window.location.href = reminderData.section.path;
+                    }
+                },
+                onCancel: () => {
+                    console.log('Notification annulée par l\'utilisateur');
+                }
+            });
+        } catch (error) {
+            console.error('Erreur lors de l\'affichage de la pop-up:', error);
+            // Fallback : utiliser une alerte simple
+            alert(`Rappel : Contrat ${reminderData.contractInfo.numeroContrat} à traiter`);
+        }
+    };
+
+    // Vérifier les rappels au chargement du composant
+    useEffect(() => {
+        // Cette fonction est maintenant gérée par le useEffect ci-dessus
+        
+        // Ajouter un bouton de test dans la console
+        window.testReminder = () => {
+            console.log('=== TEST MANUEL DES RAPPELS ===');
+            checkPendingReminders();
+        };
+        
+        // Test spécifique pour le cas 15:35 → 16:35
+        window.testSpecificReminder = () => {
+            console.log('=== TEST SPÉCIFIQUE ===');
+            const reminders = JSON.parse(localStorage.getItem('contractReminders') || '[]');
+            const now = dayjs();
+            
+            console.log('Heure actuelle:', now.format('DD/MM/YYYY HH:mm:ss'));
+            console.log('Rappels dans localStorage:', reminders);
+            
+            if (reminders.length === 0) {
+                console.log('❌ Aucun rappel trouvé dans localStorage');
+                return;
+            }
+            
+            reminders.forEach((reminder, index) => {
+                const reminderTime = dayjs(reminder.reminderTime);
+                const timeDiff = reminderTime.diff(now, 'minute');
+                console.log(`Rappel ${index + 1}:`);
+                console.log(`  - ID: ${reminder.contractId}`);
+                console.log(`  - Heure rappel: ${reminderTime.format('DD/MM/YYYY HH:mm:ss')}`);
+                console.log(`  - Différence: ${timeDiff} minutes (rappel - maintenant)`);
+                console.log(`  - Dans le passé?: ${timeDiff < 0}`);
+                console.log(`  - Doit se déclencher?: ${timeDiff <= 2}`);
+            });
+            
+            // Forcer le déclenchement du premier rappel trouvé
+            const targetReminder = reminders[0]; // Prendre le premier rappel
+            if (targetReminder) {
+                console.log('🔔 DÉCLENCHEMENT FORCÉ du rappel:', targetReminder.contractId);
+                showReminderPopup(targetReminder);
+                
+                // Retirer de la liste
+                const updatedReminders = reminders.filter(r => r.contractId !== targetReminder.contractId);
+                localStorage.setItem('contractReminders', JSON.stringify(updatedReminders));
+                console.log('Rappel supprimé après déclenchement forcé');
+            }
+        };
+        
+        // Test pour créer un rappel immédiat
+        window.createTestReminder = () => {
+            console.log('=== CRÉATION RAPPEL TEST ===');
+            const testReminder = {
+                contractId: 'TEST-123',
+                contractInfo: {
+                    numeroContrat: 'TEST-123',
+                    civilite: 'M',
+                    prenom: 'Test',
+                    nom: 'User',
+                    typeEnergie: 'Électricité'
+                },
+                reminderTime: dayjs().toISOString(), // MAINTENANT
+                section: { name: 'Test', path: '#', color: '#10b981' },
+                createdAt: dayjs().toISOString()
+            };
+            
+            const existingReminders = JSON.parse(localStorage.getItem('contractReminders') || '[]');
+            existingReminders.push(testReminder);
+            localStorage.setItem('contractReminders', JSON.stringify(existingReminders));
+            
+            console.log('Rappel de test créé pour maintenant');
+            console.log('Tapez testSpecificReminder() pour le déclencher');
+        };
+        
+        console.log('💡 Pour tester les rappels manuellement, tapez:');
+        console.log('  - testReminder() : vérification normale');
+        console.log('  - testSpecificReminder() : test détaillé avec déclenchement forcé');
+        console.log('  - createTestReminder() : créer un rappel de test pour maintenant');
+    }, [navigate]);
     
     // Debug pour vérifier les valeurs
     console.log('Dashboard - totals:', totals);
@@ -455,6 +754,67 @@ export default function DashboardPage() {
                                     </strong>
                                 </span>
                             </div>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
+            {/* Modal pour reporter le traitement */}
+            <Modal
+                title={
+                    <Space>
+                        <ClockCircleOutlined style={{ color: '#f59e0b' }} />
+                        <span>Programmer un rappel</span>
+                    </Space>
+                }
+                open={postponeModalVisible}
+                onOk={confirmPostpone}
+                onCancel={() => setPostponeModalVisible(false)}
+                okText="Programmer le rappel"
+                cancelText="Annuler"
+                width={500}
+            >
+                {latestContract && (
+                    <div>
+                        <Typography.Paragraph style={{ marginBottom: '16px' }}>
+                            Choisissez le créneau horaire pour recevoir un rappel concernant ce contrat :
+                        </Typography.Paragraph>
+                        
+                        <Card size="small" style={{ marginBottom: '16px', backgroundColor: '#f9f9f9' }}>
+                            <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>
+                                Contrat concerné :
+                            </div>
+                            <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                                {latestContract.numeroContrat} - {latestContract.civilite} {latestContract.prenom} {latestContract.nom}
+                            </div>
+                        </Card>
+                        
+                        <Form form={postponeForm} layout="vertical">
+                            <Form.Item
+                                name="reminderTime"
+                                label="Date et heure du rappel"
+                                rules={[{ required: true, message: 'Veuillez sélectionner une date et heure' }]}
+                            >
+                                <DatePicker
+                                    showTime
+                                    placeholder="Sélectionnez la date et heure du rappel"
+                                    style={{ width: '100%' }}
+                                    disabledDate={(current) => current && current < dayjs().startOf('day')}
+                                    format="DD/MM/YYYY HH:mm"
+                                    size="large"
+                                />
+                            </Form.Item>
+                        </Form>
+                        
+                        <div style={{ 
+                            padding: '12px', 
+                            backgroundColor: '#e6f7ff', 
+                            borderRadius: '6px',
+                            border: '1px solid #91d5ff',
+                            fontSize: '12px',
+                            color: '#666'
+                        }}>
+                            💡 Vous recevrez une notification à l'heure choisie avec un accès direct au contrat.
                         </div>
                     </div>
                 )}

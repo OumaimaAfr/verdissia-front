@@ -1,8 +1,8 @@
 import { useContext, useState, useEffect } from 'react';
-import { Layout, Dropdown, Avatar, Space, Badge, Tooltip } from 'antd';
+import { Layout, Dropdown, Avatar, Space, Badge, Tooltip, Modal, Typography, Card } from 'antd';
 import { LogoutOutlined, UserOutlined, SettingOutlined, BellOutlined } from '@ant-design/icons';
 import { AuthContext } from '../context/AuthContext';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getMap } from '../utils/workflowStore';
 import dayjs from 'dayjs';
 
@@ -11,6 +11,7 @@ const { Header } = Layout;
 function BackofficeHeader() {
     const { logoutUser, contracts } = useContext(AuthContext);
     const { pathname } = useLocation();
+    const navigate = useNavigate();
     const isDashboard = pathname === '/backoffice/dashboard';
     const [notifications, setNotifications] = useState([]);
 
@@ -50,9 +51,224 @@ function BackofficeHeader() {
             setNotifications(upcomingCallbacks);
         };
 
-        checkNotifications();
-        const interval = setInterval(checkNotifications, 60000); // Check every minute
+        // Vérifier également les rappels de contrats programmés
+        const checkContractReminders = () => {
+            try {
+                const reminders = JSON.parse(localStorage.getItem('contractReminders') || '[]');
+                const now = dayjs();
+                
+                console.log('🔍 Header - Vérification des rappels - Heure actuelle:', now.format('DD/MM/YYYY HH:mm:ss'));
+                console.log('🔍 Header - Rappels en attente:', reminders.length);
+                
+                if (reminders.length === 0) {
+                    console.log('🔍 Header - Aucun rappel en attente');
+                    return;
+                }
+                
+                reminders.forEach((reminderData, index) => {
+                    const reminderTime = dayjs(reminderData.reminderTime);
+                    console.log(`🔍 Header - Rappel ${index + 1} (${reminderData.contractId}): ${reminderTime.format('DD/MM/YYYY HH:mm:ss')}`);
+                    
+                    // Vérifier si le rappel doit être déclenché (fenêtre de 5 minutes)
+                    const timeDiff = reminderTime.diff(now, 'minute');
+                    console.log(`🔍 Header - Différence temps: ${timeDiff} minutes`);
+                    
+                    if (timeDiff >= -5 && timeDiff <= 1) {
+                        console.log('🔔 Header - DÉCLENCHEMENT du rappel pour:', reminderData.contractId);
+                        showContractReminderNotification(reminderData);
+                        
+                        // Retirer le rappel de la liste
+                        const updatedReminders = reminders.filter(r => r.contractId !== reminderData.contractId);
+                        localStorage.setItem('contractReminders', JSON.stringify(updatedReminders));
+                        console.log('🔍 Header - Rappel supprimé de la liste');
+                    }
+                });
+            } catch (error) {
+                console.error('🔍 Header - Erreur lors de la vérification des rappels:', error);
+            }
+        };
 
+        // Fonction pour calculer la page où se trouve le contrat
+        const calculateContractPage = (contractId, sectionPath) => {
+            console.log(`🔍 Header - Calcul de page pour ${contractId} dans ${sectionPath}`);
+            
+            // Simuler le même calcul que le DashboardPage
+            // Utiliser les contrats existants et les trier comme dans le Dashboard
+            
+            let sectionData = [];
+            const workflowMap = getMap();
+            
+            // Appliquer la même logique que computeBuckets
+            contracts.forEach(c => {
+                const id = c.numeroContrat;
+                const wf = workflowMap[id];
+                
+                if (sectionPath.includes('/create')) {
+                    if (wf?.state === 'TO_CREATE' || c.actionConseiller === 'TRAITER') {
+                        sectionData.push({ ...c, ...wf });
+                    }
+                } else if (sectionPath.includes('/blocked')) {
+                    if (wf?.state === 'BLOCKED' || (c.actionConseiller !== 'TRAITER' && c.actionConseiller !== 'VÉRIFICATION_OBLIGATOIRE' && c.actionConseiller !== 'EXAMINER')) {
+                        sectionData.push({ ...c, ...wf });
+                    }
+                } else if (sectionPath.includes('/examiner')) {
+                    if (wf?.state === 'EXAMINER' || c.actionConseiller === 'VÉRIFICATION_OBLIGATOIRE' || c.actionConseiller === 'EXAMINER') {
+                        sectionData.push({ ...c, ...wf });
+                    }
+                }
+            });
+            
+            // Trier par date de soumission (plus récent d'abord) comme dans le Dashboard
+            sectionData.sort((a, b) => {
+                const dateA = dayjs(a.dateMiseEnService || a.dateSoumission);
+                const dateB = dayjs(b.dateMiseEnService || b.dateSoumission);
+                return dateB.diff(dateA);
+            });
+            
+            // Trouver l'index du contrat
+            const contractIndex = sectionData.findIndex(c => c.numeroContrat === contractId);
+            const pageNumber = contractIndex >= 0 ? Math.floor(contractIndex / 10) + 1 : 1;
+            
+            console.log(`🔍 Header - Résultat calcul page pour ${contractId}:`);
+            console.log(`  - Total contrats dans section: ${sectionData.length}`);
+            console.log(`  - Index du contrat: ${contractIndex}`);
+            console.log(`  - Page calculée: ${pageNumber}`);
+            console.log(`  - Contrats trouvés:`, sectionData.slice(0, 5).map(c => c.numeroContrat));
+            
+            return pageNumber;
+        };
+
+        // Fonction pour afficher la notification de rappel
+        const showContractReminderNotification = (reminderData) => {
+            try {
+                console.log('🔍 Header - Affichage de la pop-up pour:', reminderData.contractId);
+                
+                // Calculer la page où se trouve le contrat
+                const targetPage = calculateContractPage(reminderData.contractId, reminderData.section.path);
+                
+                Modal.info({
+                    title: (
+                        <Space>
+                            <BellOutlined style={{ color: '#fa8c16' }} />
+                            <span>Rappel de contrat à traiter</span>
+                        </Space>
+                    ),
+                    width: 600,
+                    content: (
+                        <div>
+                            <Typography.Paragraph>
+                                Vous avez un contrat en attente de traitement :
+                            </Typography.Paragraph>
+                            <Card size="small" style={{ marginBottom: 16, border: '2px solid #fa8c16', backgroundColor: '#fff7e6' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                    <div>
+                                        <span style={{ color: '#6b7280', fontSize: '12px' }}>N° Dossier</span>
+                                        <div style={{ fontWeight: '600', fontSize: '14px' }}>{reminderData.contractInfo.numeroContrat}</div>
+                                    </div>
+                                    <div>
+                                        <span style={{ color: '#6b7280', fontSize: '12px' }}>Client</span>
+                                        <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                                            {reminderData.contractInfo.civilite} {reminderData.contractInfo.prenom} {reminderData.contractInfo.nom}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span style={{ color: '#6b7280', fontSize: '12px' }}>Section</span>
+                                        <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                                            <span style={{ color: reminderData.section.color }}>
+                                                {reminderData.section.name}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span style={{ color: '#6b7280', fontSize: '12px' }}>Page</span>
+                                        <div style={{ fontWeight: '700', fontSize: '16px', color: '#fa8c16' }}>
+                                            Page {targetPage}
+                                            <BellOutlined style={{ marginLeft: '8px', color: '#fa8c16', fontSize: '14px' }} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                            <Typography.Paragraph style={{ marginBottom: 16, fontSize: '13px', color: '#666' }}>
+                                💡 <strong>Cliquez sur "Traiter maintenant"</strong> pour accéder directement au contrat sur la bonne page avec mise en évidence.
+                            </Typography.Paragraph>
+                            <Typography.Paragraph style={{ fontSize: '12px', color: '#999', fontStyle: 'italic' }}>
+                                💡 Cliquez en dehors de cette fenêtre pour la fermer.
+                            </Typography.Paragraph>
+                        </div>
+                    ),
+                    okText: (
+                        <Space>
+                            <BellOutlined />
+                            <span>Traiter maintenant</span>
+                        </Space>
+                    ),
+                    okButtonProps: {
+                        style: { backgroundColor: '#fa8c16', borderColor: '#fa8c16' }
+                    },
+                    cancelButtonProps: {
+                        style: { display: 'none' } // Cacher le bouton cancel car on clique en dehors
+                    },
+                    maskClosable: true, // Permettre la fermeture en cliquant sur le masque
+                    onOk: () => {
+                        try {
+                            console.log('🔍 Header - Redirection vers:', reminderData.section.path);
+                            console.log('🔍 Header - Page cible:', targetPage);
+                            
+                            // Rediriger vers la section appropriée avec mise en évidence
+                            sessionStorage.setItem('highlightContract', reminderData.contractId);
+                            sessionStorage.setItem('scrollToContract', 'true');
+                            sessionStorage.setItem('targetPage', targetPage.toString());
+                            
+                            // Utiliser navigate au lieu de window.location.href
+                            navigate(reminderData.section.path);
+                        } catch (error) {
+                            console.error('🔍 Header - Erreur lors de la redirection:', error);
+                            // Fallback : utiliser window.location.href
+                            window.location.href = reminderData.section.path;
+                        }
+                    },
+                    onCancel: () => {
+                        console.log('🔍 Header - Notification fermée par l\'utilisateur (clic extérieur)');
+                    }
+                });
+            } catch (error) {
+                console.error('🔍 Header - Erreur lors de l\'affichage de la pop-up:', error);
+                // Fallback : utiliser une alerte simple
+                alert(`Rappel : Contrat ${reminderData.contractInfo.numeroContrat} à traiter`);
+            }
+        };
+
+        const checkAllNotifications = () => {
+            checkNotifications();
+            checkContractReminders();
+        };
+
+        checkAllNotifications();
+        const interval = setInterval(checkAllNotifications, 30000); // Check every 30 seconds
+
+        // Ajouter une fonction de test globale
+        window.checkReminders = () => {
+            console.log('=== VÉRIFICATION MANUELLE DES RAPPELS ===');
+            checkContractReminders();
+        };
+        
+        console.log('💡 Header - Pour vérifier les rappels manuellement, tapez: checkReminders() dans la console');
+
+        // Ajouter une fonction de test globale
+        window.testContractPage = (contractId) => {
+            console.log('=== TEST CALCUL PAGE ===');
+            console.log(`Recherche du contrat: ${contractId}`);
+            
+            // Tester pour chaque section
+            const sections = ['/backoffice/create', '/backoffice/blocked', '/backoffice/examiner'];
+            sections.forEach(path => {
+                const page = calculateContractPage(contractId, path);
+                console.log(`Section ${path}: Page ${page}`);
+            });
+        };
+        
+        console.log('💡 Header - Pour tester le calcul de page, tapez: testContractPage("CTR-020")');
+        
         return () => clearInterval(interval);
     }, [contracts]);
 
