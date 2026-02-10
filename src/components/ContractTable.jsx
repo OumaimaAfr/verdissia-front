@@ -108,11 +108,32 @@ export default function ContractTable({
     const [callResultForm] = Form.useForm();
     const [selectedNextAction, setSelectedNextAction] = useState(null);
 
+    // Fonctions pour la gestion des informations manquantes
+    const [missingInfoOpen, setMissingInfoOpen] = useState(false);
+    const [missingInfoTarget, setMissingInfoTarget] = useState(null);
+    const [missingInfoForm] = Form.useForm();
+
     const markAsCalled = (record) => {
         setCallResultTarget(record);
         callResultForm.resetFields();
         setSelectedNextAction(null);
         setCallResultOpen(true);
+    };
+
+    const askMissingInfo = (record) => {
+        setMissingInfoTarget(record);
+        missingInfoForm.resetFields();
+        setMissingInfoOpen(true);
+    };
+
+    const confirmMissingInfo = async () => {
+        try {
+            const { missingInfoType, missingInfoDetails } = await missingInfoForm.validateFields();
+            const reason = `Information manquante: ${missingInfoType}${missingInfoDetails ? ` - ${missingInfoDetails}` : ''}`;
+            moveToCalls(missingInfoTarget, reason);
+            setMissingInfoOpen(false);
+        } catch {
+        }
     };
 
     const confirmCallResult = async () => {
@@ -381,7 +402,7 @@ export default function ContractTable({
                                         { key: 'phone', label: '📞 Téléphone invalide', onClick: () => moveToCalls(record, 'Téléphone invalide') },
                                         { key: 'email', label: '📧 Email à confirmer', onClick: () => moveToCalls(record, 'Email à confirmer') },
                                         { key: 'date', label: '📅 Date non standard', onClick: () => moveToCalls(record, 'Date non standard') },
-                                        { key: 'missing', label: '❓ Information manquante', onClick: () => moveToCalls(record, 'Information manquante') },
+                                        { key: 'missing', label: '❓ Information manquante', onClick: () => askMissingInfo(record) },
                                     ]
                                 }}
                             >
@@ -420,7 +441,7 @@ export default function ContractTable({
                                         { key: 'phone', label: '📞 Téléphone invalide', onClick: () => moveToCalls(record, 'Téléphone invalide') },
                                         { key: 'email', label: '📧 Email à confirmer', onClick: () => moveToCalls(record, 'Email à confirmer') },
                                         { key: 'date', label: '📅 Date non standard', onClick: () => moveToCalls(record, 'Date non standard') },
-                                        { key: 'missing', label: '❓ Information manquante', onClick: () => moveToCalls(record, 'Information manquante') },
+                                        { key: 'missing', label: '❓ Information manquante', onClick: () => askMissingInfo(record) },
                                     ]
                                 }}
                             >
@@ -658,6 +679,54 @@ export default function ContractTable({
                         rules={[{ required: true, message: 'Le motif est obligatoire' }]}
                     >
                         <Input.TextArea rows={4} maxLength={500} showCount placeholder="Ex: Email invalide, Téléphone non conforme, Adresse incohérente..." />
+                    </Form.Item>
+                </Form>
+            </Modal>
+
+            <Modal
+                title="Information manquante"
+                open={missingInfoOpen}
+                onOk={confirmMissingInfo}
+                onCancel={() => setMissingInfoOpen(false)}
+                okText="Confirmer"
+                cancelText="Annuler"
+                width={600}
+            >
+                <Typography.Paragraph>
+                    Veuillez spécifier <strong>quelle information manque</strong> pour le dossier de {missingInfoTarget?.prenom} {missingInfoTarget?.nom}.
+                </Typography.Paragraph>
+                <Form form={missingInfoForm} layout="vertical">
+                    <Form.Item
+                        name="missingInfoType"
+                        label="Type d'information manquante"
+                        rules={[{ required: true, message: 'Veuillez sélectionner un type' }]}
+                    >
+                        <Select placeholder="Sélectionnez le type d'information manquante">
+                            <Select.Option value="Adresse complète">📍 Adresse complète</Select.Option>
+                            <Select.Option value="Code postal">📮 Code postal</Select.Option>
+                            <Select.Option value="Ville">🏙️ Ville</Select.Option>
+                            <Select.Option value="Numéro de téléphone">📞 Numéro de téléphone</Select.Option>
+                            <Select.Option value="Adresse email">📧 Adresse email</Select.Option>
+                            <Select.Option value="Revenus mensuels">💰 Revenus mensuels</Select.Option>
+                            <Select.Option value="Situation professionnelle">💼 Situation professionnelle</Select.Option>
+                            <Select.Option value="Numéro de compte bancaire">🏦 Numéro de compte bancaire</Select.Option>
+                            <Select.Option value="Date de naissance">🎂 Date de naissance</Select.Option>
+                            <Select.Option value="Lieu de naissance">📍 Lieu de naissance</Select.Option>
+                            <Select.Option value="Pièce d'identité">🆔 Pièce d'identité</Select.Option>
+                            <Select.Option value="Justificatif de domicile">🏠 Justificatif de domicile</Select.Option>
+                            <Select.Option value="Autre">❓ Autre</Select.Option>
+                        </Select>
+                    </Form.Item>
+                    <Form.Item
+                        name="missingInfoDetails"
+                        label="Détails supplémentaires (optionnel)"
+                    >
+                        <Input.TextArea 
+                            rows={3} 
+                            maxLength={200} 
+                            showCount 
+                            placeholder="Précisez les détails si nécessaire..." 
+                        />
                     </Form.Item>
                 </Form>
             </Modal>
