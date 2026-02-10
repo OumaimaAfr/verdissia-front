@@ -1,6 +1,6 @@
 import { useContext, useState, useEffect } from 'react';
 import { Layout, Dropdown, Avatar, Space, Badge, Tooltip, Modal, Typography, Card } from 'antd';
-import { LogoutOutlined, UserOutlined, SettingOutlined, BellOutlined } from '@ant-design/icons';
+import { LogoutOutlined, UserOutlined, SettingOutlined, BellOutlined, PhoneOutlined } from '@ant-design/icons';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getMap } from '../utils/workflowStore';
@@ -24,6 +24,7 @@ function BackofficeHeader() {
             const inTenMinutes = now.add(10, 'minute');
             const upcomingCallbacks = [];
 
+            // Vérifier les callbacks dans workflowMap
             Object.entries(workflowMap).forEach(([contractId, workflow]) => {
                 if (workflow.nextAction === 'callback_later' && workflow.callbackDateTime) {
                     const callbackTime = dayjs(workflow.callbackDateTime);
@@ -44,6 +45,30 @@ function BackofficeHeader() {
                     }
                 }
             });
+
+            // Vérifier également les rappels dans localStorage
+            try {
+                const reminders = JSON.parse(localStorage.getItem('contractReminders') || '[]');
+                
+                reminders.forEach((reminderData) => {
+                    const reminderTime = dayjs(reminderData.reminderTime);
+                    
+                    if (reminderTime.isAfter(now) && reminderTime.isBefore(inTenMinutes)) {
+                        const clientName = reminderData.contractInfo ? 
+                            `${reminderData.contractInfo.prenom || ''} ${reminderData.contractInfo.nom || ''}`.trim() : 
+                            'Client';
+                        
+                        upcomingCallbacks.push({
+                            contractId: reminderData.contractId,
+                            callbackTime: reminderTime,
+                            clientName,
+                            minutesUntil: reminderTime.diff(now, 'minutes')
+                        });
+                    }
+                });
+            } catch (error) {
+                console.error('Erreur lors de la lecture des rappels localStorage:', error);
+            }
 
             // Sort by urgency (closest first)
             upcomingCallbacks.sort((a, b) => a.minutesUntil - b.minutesUntil);
@@ -72,7 +97,7 @@ function BackofficeHeader() {
                     const timeDiff = reminderTime.diff(now, 'minute');
                     console.log(`🔍 Header - Différence temps: ${timeDiff} minutes`);
                     
-                    if (timeDiff >= -5 && timeDiff <= 1) {
+                    if (timeDiff >= -2 && timeDiff <= 1) {
                         console.log('🔔 Header - DÉCLENCHEMENT du rappel pour:', reminderData.contractId);
                         showContractReminderNotification(reminderData);
                         
@@ -171,7 +196,7 @@ function BackofficeHeader() {
                             </div>
                         </Card>
                         <Typography.Paragraph style={{ marginBottom: 16, fontSize: '13px', color: '#666' }}>
-                            💡 <strong>Cliquez sur "Traiter maintenant"</strong> pour accéder directement au contrat sur la bonne page avec mise en évidence.
+                            💡 <strong>Cliquez sur "Appeler maintenant"</strong> pour accéder directement au contrat et passer l'appel client.
                         </Typography.Paragraph>
                         <Typography.Paragraph style={{ fontSize: '12px', color: '#999', fontStyle: 'italic' }}>
                             💡 Cliquez sur "Rappel plus tard" ou en dehors de cette fenêtre pour être notifié à nouveau dans 30 minutes.
@@ -183,15 +208,15 @@ function BackofficeHeader() {
                     title: (
                         <Space>
                             <BellOutlined style={{ color: '#fa8c16' }} />
-                            <span>Rappel de contrat à traiter</span>
+                            <span>Appel client à effectuer</span>
                         </Space>
                     ),
                     width: 600,
                     content: modalContent,
                     okText: (
                         <Space>
-                            <BellOutlined />
-                            <span>Traiter maintenant</span>
+                            <PhoneOutlined />
+                            <span>Appeler maintenant</span>
                         </Space>
                     ),
                     okButtonProps: {

@@ -250,8 +250,8 @@ function LoginPage() {
                     <Form layout="vertical" onFinish={onFinish} autoComplete="off" requiredMark={false}>
                         <Form.Item 
                             name="username" 
-                            label={<span style={{ color: '#374151', fontWeight: '600', fontSize: '15px' }}>Username</span>} 
-                            rules={[{ required: true, message: "Le username est requis." }]}
+                            label={<span style={{ color: '#374151', fontWeight: '600', fontSize: '15px' }}>Identifiant</span>}
+                            rules={[{ required: true, message: "L'identifiant est requis." }]}
                         >
                             <Input 
                                 prefix={<UserOutlined style={{ color: '#10b981' }} />}
@@ -264,7 +264,7 @@ function LoginPage() {
                                     background: 'rgba(249, 250, 251, 0.8)',
                                     transition: 'all 0.3s ease'
                                 }}
-                                placeholder="username"
+                                placeholder="Veuillez saisir votre identifiant."
                             />
                         </Form.Item>
 
