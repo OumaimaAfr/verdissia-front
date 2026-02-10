@@ -97,7 +97,7 @@ function BackofficeHeader() {
                     const timeDiff = reminderTime.diff(now, 'minute');
                     console.log(`🔍 Header - Différence temps: ${timeDiff} minutes`);
                     
-                    if (timeDiff >= -2 && timeDiff <= 1) {
+                    if (timeDiff >= -2 && timeDiff <= 5) {
                         console.log('🔔 Header - DÉCLENCHEMENT du rappel pour:', reminderData.contractId);
                         showContractReminderNotification(reminderData);
                         
@@ -158,126 +158,93 @@ function BackofficeHeader() {
             try {
                 console.log('🔍 Header - Affichage de la pop-up pour:', reminderData.contractId);
                 
-                // Calculer la page où se trouve le contrat
-                const targetPage = calculateContractPage(reminderData.contractId, reminderData.section.path);
+                // Afficher une pop-up d'alerte visible
+                const clientName = reminderData.contractInfo ? 
+                    `${reminderData.contractInfo.prenom || ''} ${reminderData.contractInfo.nom || ''}`.trim() : 
+                    'Client';
                 
-                const modalContent = (
-                    <div>
-                        <Typography.Paragraph>
-                            Vous avez un contrat en attente de traitement :
-                        </Typography.Paragraph>
-                        <Card size="small" style={{ marginBottom: 16, border: '2px solid #fa8c16', backgroundColor: '#fff7e6' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                <div>
-                                    <span style={{ color: '#6b7280', fontSize: '12px' }}>N° Dossier</span>
-                                    <div style={{ fontWeight: '600', fontSize: '14px' }}>{reminderData.contractInfo.numeroContrat}</div>
-                                </div>
-                                <div>
-                                    <span style={{ color: '#6b7280', fontSize: '12px' }}>Client</span>
-                                    <div style={{ fontWeight: '600', fontSize: '14px' }}>
-                                        {reminderData.contractInfo.civilite} {reminderData.contractInfo.prenom} {reminderData.contractInfo.nom}
-                                    </div>
-                                </div>
-                                <div>
-                                    <span style={{ color: '#6b7280', fontSize: '12px' }}>Section</span>
-                                    <div style={{ fontWeight: '600', fontSize: '14px' }}>
-                                        <span style={{ color: reminderData.section.color }}>
-                                            {reminderData.section.name}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <span style={{ color: '#6b7280', fontSize: '12px' }}>Page</span>
-                                    <div style={{ fontWeight: '700', fontSize: '16px', color: '#fa8c16' }}>
-                                        Page {targetPage}
-                                        <BellOutlined style={{ marginLeft: '8px', color: '#fa8c16', fontSize: '14px' }} />
-                                    </div>
-                                </div>
-                            </div>
-                        </Card>
-                        <Typography.Paragraph style={{ marginBottom: 16, fontSize: '13px', color: '#666' }}>
-                            💡 <strong>Cliquez sur "Appeler maintenant"</strong> pour accéder directement au contrat et passer l'appel client.
-                        </Typography.Paragraph>
-                        <Typography.Paragraph style={{ fontSize: '12px', color: '#999', fontStyle: 'italic' }}>
-                            💡 Cliquez sur "Rappel plus tard" ou en dehors de cette fenêtre pour être notifié à nouveau dans 30 minutes.
-                        </Typography.Paragraph>
+                // Créer une pop-up d'alerte personnalisée
+                const alertDiv = document.createElement('div');
+                alertDiv.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+                    color: white;
+                    padding: 30px 40px;
+                    border-radius: 15px;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                    z-index: 10000;
+                    font-family: Arial, sans-serif;
+                    font-size: 16px;
+                    text-align: center;
+                    min-width: 400px;
+                    animation: alertPulse 0.5s ease-in-out infinite alternate;
+                    border: 3px solid #ffffff;
+                `;
+                
+                alertDiv.innerHTML = `
+                    <div style="font-size: 48px; margin-bottom: 15px;">📞</div>
+                    <div style="font-weight: bold; font-size: 20px; margin-bottom: 10px;">APPEL CLIENT À EFFECTUER</div>
+                    <div style="margin: 15px 0; font-size: 16px;">
+                        <strong>Client:</strong> ${clientName}<br>
+                        <strong>Contrat:</strong> ${reminderData.contractId}
                     </div>
-                );
+                    <div style="margin-top: 20px; font-size: 14px; opacity: 0.9;">
+                        Vous avez un appel prévu avec ce client !
+                    </div>
+                    <button onclick="this.parentElement.remove()" style="
+                        margin-top: 20px;
+                        padding: 12px 30px;
+                        background: white;
+                        color: #ee5a24;
+                        border: none;
+                        border-radius: 8px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        font-size: 16px;
+                    ">OK</button>
+                `;
                 
-                Modal.confirm({
-                    title: (
-                        <Space>
-                            <BellOutlined style={{ color: '#fa8c16' }} />
-                            <span>Appel client à effectuer</span>
-                        </Space>
-                    ),
-                    width: 600,
-                    content: modalContent,
-                    okText: (
-                        <Space>
-                            <PhoneOutlined />
-                            <span>Appeler maintenant</span>
-                        </Space>
-                    ),
-                    okButtonProps: {
-                        style: { backgroundColor: '#fa8c16', borderColor: '#fa8c16' }
-                    },
-                    cancelText: (
-                        <Space>
-                            <span>⏰</span>
-                            <span>Rappel plus tard</span>
-                        </Space>
-                    ),
-                    maskClosable: true, // Permettre la fermeture en cliquant sur le masque
-                    centered: true,
-                    onOk: () => {
-                        try {
-                            console.log('🔍 Header - Redirection vers:', reminderData.section.path);
-                            console.log('🔍 Header - Page cible:', targetPage);
-                            
-                            // Rediriger vers la section appropriée avec mise en évidence
-                            sessionStorage.setItem('highlightContract', reminderData.contractId);
-                            sessionStorage.setItem('scrollToContract', 'true');
-                            sessionStorage.setItem('targetPage', targetPage.toString());
-                            
-                            // Utiliser navigate au lieu de window.location.href
-                            navigate(reminderData.section.path);
-                        } catch (error) {
-                            console.error('🔍 Header - Erreur lors de la redirection:', error);
-                            // Fallback : utiliser window.location.href
-                            window.location.href = reminderData.section.path;
-                        }
-                    },
-                    onCancel: () => {
-                        console.log('🔍 Header - Rappel plus tard cliqué ou clic extérieur - replanification du rappel');
-                        // Reprogrammer le rappel pour 30 minutes plus tard
-                        try {
-                            const newReminderTime = dayjs().add(30, 'minute');
-                            const updatedReminder = {
-                                ...reminderData,
-                                reminderTime: newReminderTime.toISOString()
-                            };
-                            
-                            // Récupérer les rappels existants
-                            const reminders = JSON.parse(localStorage.getItem('contractReminders') || '[]');
-                            
-                            // Ajouter le nouveau rappel
-                            reminders.push(updatedReminder);
-                            
-                            // Sauvegarder
-                            localStorage.setItem('contractReminders', JSON.stringify(reminders));
-                            
-                            console.log('🔍 Header - Rappel reprogrammé pour:', newReminderTime.format('DD/MM/YYYY HH:mm:ss'));
-                        } catch (error) {
-                            console.error('🔍 Header - Erreur lors de la reprogrammation du rappel:', error);
-                        }
+                // Ajouter l'animation CSS
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes alertPulse {
+                        from { transform: translate(-50%, -50%) scale(1); }
+                        to { transform: translate(-50%, -50%) scale(1.05); }
                     }
-                });
+                `;
+                document.head.appendChild(style);
+                
+                // Ajouter la pop-up au body
+                document.body.appendChild(alertDiv);
+                
+                // Son de notification (si disponible)
+                try {
+                    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
+                    audio.play().catch(() => {}); // Ignorer les erreurs de lecture audio
+                } catch (e) {}
+                
+                // Retirer automatiquement après 10 secondes
+                setTimeout(() => {
+                    if (alertDiv.parentElement) {
+                        alertDiv.remove();
+                    }
+                }, 10000);
+                
+                // Retirer le rappel de la liste
+                try {
+                    const reminders = JSON.parse(localStorage.getItem('contractReminders') || '[]');
+                    const updatedReminders = reminders.filter(r => r.contractId !== reminderData.contractId);
+                    localStorage.setItem('contractReminders', JSON.stringify(updatedReminders));
+                    console.log('🔍 Header - Rappel supprimé de la liste');
+                } catch (error) {
+                    console.error('Erreur lors de la suppression du rappel:', error);
+                }
                 
             } catch (error) {
                 console.error('🔍 Header - Erreur lors de l\'affichage de la pop-up:', error);
-                // Fallback : utiliser une alerte simple
-                alert(`Rappel : Contrat ${reminderData.contractInfo.numeroContrat} à traiter`);
             }
         };
 
