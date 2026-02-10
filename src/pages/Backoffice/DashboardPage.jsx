@@ -1,5 +1,5 @@
-import React from "react";
-import { Row, Col, Card, Statistic } from 'antd';
+import React, { useState, useEffect } from "react";
+import { Row, Col, Card, Statistic, Modal, Button, Typography, Space } from 'antd';
 import {
     PieChart, Pie, Cell,
     BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -13,7 +13,9 @@ import {
     PhoneOutlined, 
     SearchOutlined,
     CloseCircleOutlined,
-    CheckCircleOutlined
+    CheckCircleOutlined,
+    ClockCircleOutlined,
+    EyeOutlined
 } from '@ant-design/icons';
 
 function PieSideLegend({ data }) {
@@ -125,10 +127,56 @@ function StatsCard({ title, value, icon, color, onClick }) {
 
 export default function DashboardPage() {
     const { toCreate, blocked, calls, examiner, declined, processed, totals } = useBackofficeBuckets();
+    const [newContractModalVisible, setNewContractModalVisible] = useState(false);
+    const [latestContract, setLatestContract] = useState(null);
 
-    React.useEffect(() => {
+    useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, []);
+        
+        // Détecter la dernière demande de contrat ajoutée
+        const checkLatestContract = () => {
+            const allContracts = [...toCreate, ...blocked, ...examiner];
+            
+            if (allContracts.length > 0) {
+                // Trier par date de soumission (la plus récente d'abord)
+                const sortedContracts = allContracts
+                    .filter(c => c.dateMiseEnService || c.dateSoumission) // Filtrer les contrats avec une date
+                    .sort((a, b) => {
+                        const dateA = dayjs(a.dateMiseEnService || a.dateSoumission);
+                        const dateB = dayjs(b.dateMiseEnService || b.dateSoumission);
+                        return dateB.diff(dateA); // Plus récent d'abord
+                    });
+                
+                if (sortedContracts.length > 0) {
+                    const latest = sortedContracts[0];
+                    const now = dayjs();
+                    const contractDate = dayjs(latest.dateMiseEnService || latest.dateSoumission);
+                    const minutesAgo = now.diff(contractDate, 'minute');
+                    
+                    // Si le contrat a été ajouté il y a moins de 30 minutes
+                    if (minutesAgo < 30) {
+                        setLatestContract({
+                            ...latest,
+                            timeAgo: minutesAgo < 1 ? 'à l\'instant' : 
+                                   minutesAgo < 60 ? `il y a ${minutesAgo} minute${minutesAgo > 1 ? 's' : ''}` :
+                                   `il y a ${Math.floor(minutesAgo / 60)} heure${Math.floor(minutesAgo / 60) > 1 ? 's' : ''}`
+                        });
+                        
+                        // Vérifier si c'est la première visite sur cette session
+                        const hasSeenNotification = sessionStorage.getItem('latestContractSeen');
+                        if (!hasSeenNotification || hasSeenNotification !== latest.numeroContrat) {
+                            setNewContractModalVisible(true);
+                            sessionStorage.setItem('latestContractSeen', latest.numeroContrat);
+                        }
+                    }
+                }
+            }
+        };
+        
+        // Vérifier après un court délai pour s'assurer que les données sont chargées
+        const timer = setTimeout(checkLatestContract, 1000);
+        return () => clearTimeout(timer);
+    }, [toCreate, blocked, examiner]);
 
     // Gestion des clics sur les cartes
     const handleCardClick = (cardType) => {
@@ -159,6 +207,31 @@ export default function DashboardPage() {
             default:
                 console.log(`Carte cliquée: ${cardType}`);
         }
+    };
+
+    // Fonction pour déterminer dans quelle section se trouve le contrat
+    const getContractSection = (contract) => {
+        if (toCreate.find(c => c.numeroContrat === contract.numeroContrat)) {
+            return { name: 'Contrats à créer', path: '/backoffice/create', color: '#10b981' };
+        }
+        if (blocked.find(c => c.numeroContrat === contract.numeroContrat)) {
+            return { name: 'Cas bloqués', path: '/backoffice/blocked', color: '#f59e0b' };
+        }
+        if (examiner.find(c => c.numeroContrat === contract.numeroContrat)) {
+            return { name: 'Cas à examiner', path: '/backoffice/examiner', color: '#3b82f6' };
+        }
+        return { name: 'Non trouvé', path: '#', color: '#6b7280' };
+    };
+
+    // Fonction pour gérer le traitement immédiat
+    const handleImmediateProcessing = () => {
+        const section = getContractSection(latestContract);
+        window.location.href = section.path;
+    };
+
+    // Fonction pour reporter le traitement
+    const handlePostponeProcessing = () => {
+        setNewContractModalVisible(false);
     };
     
     // Debug pour vérifier les valeurs
@@ -298,6 +371,95 @@ export default function DashboardPage() {
 
     return (
         <div style={{ padding: '0' }}>
+            {/* Modal pour la dernière demande de contrat */}
+            <Modal
+                title={
+                    <Space>
+                        <ClockCircleOutlined style={{ color: '#10b981' }} />
+                        <span>Nouvelle demande de contrat</span>
+                    </Space>
+                }
+                open={newContractModalVisible}
+                onCancel={handlePostponeProcessing}
+                footer={[
+                    <Button key="postpone" onClick={handlePostponeProcessing}>
+                        Reporter
+                    </Button>,
+                    <Button key="immediate" type="primary" onClick={handleImmediateProcessing}>
+                        Traiter immédiatement
+                    </Button>
+                ]}
+                width={600}
+                style={{ top: 100 }}
+            >
+                {latestContract && (
+                    <div>
+                        <Typography.Paragraph style={{ fontSize: '16px', marginBottom: '20px' }}>
+                            Bonjour <strong>Administrateur</strong>, vous avez une nouvelle demande de contrat à traiter.
+                        </Typography.Paragraph>
+                        
+                        <Card 
+                            size="small" 
+                            style={{ 
+                                marginBottom: '16px',
+                                border: '1px solid #d9f7be',
+                                backgroundColor: '#f6ffed'
+                            }}
+                        >
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                <div>
+                                    <span style={{ color: '#6b7280', fontSize: '12px' }}>N° Dossier</span>
+                                    <div style={{ fontWeight: '600', fontSize: '14px' }}>{latestContract.numeroContrat}</div>
+                                </div>
+                                <div>
+                                    <span style={{ color: '#6b7280', fontSize: '12px' }}>Client</span>
+                                    <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                                        {latestContract.civilite} {latestContract.prenom} {latestContract.nom}
+                                    </div>
+                                </div>
+                                <div>
+                                    <span style={{ color: '#6b7280', fontSize: '12px' }}>Localisation</span>
+                                    <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                                        {latestContract.ville} ({latestContract.codePostal})
+                                    </div>
+                                </div>
+                                <div>
+                                    <span style={{ color: '#6b7280', fontSize: '12px' }}>Énergie</span>
+                                    <div style={{ fontWeight: '600', fontSize: '14px' }}>{latestContract.typeEnergie}</div>
+                                </div>
+                                <div>
+                                    <span style={{ color: '#6b7280', fontSize: '12px' }}>Offre</span>
+                                    <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                                        {latestContract.libelleOffre || latestContract.offre}
+                                    </div>
+                                </div>
+                                <div>
+                                    <span style={{ color: '#6b7280', fontSize: '12px' }}>Ajouté</span>
+                                    <div style={{ fontWeight: '600', fontSize: '14px' }}>{latestContract.timeAgo}</div>
+                                </div>
+                            </div>
+                        </Card>
+
+                        <div style={{ 
+                            padding: '12px', 
+                            backgroundColor: '#e6f7ff', 
+                            borderRadius: '6px',
+                            border: '1px solid #91d5ff'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <EyeOutlined style={{ color: '#1890ff' }} />
+                                <span style={{ fontSize: '14px' }}>
+                                    Ce contrat se trouve dans la section : 
+                                    <strong style={{ color: getContractSection(latestContract).color, marginLeft: '4px' }}>
+                                        {getContractSection(latestContract).name}
+                                    </strong>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
             {/* Stats Cards */}
             <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
                 <Col xs={24} sm={12} lg={6}>
