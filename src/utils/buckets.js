@@ -8,6 +8,7 @@ export function computeBuckets(contracts = []) {
     const calls = [];
     const examiner = [];
     const declined = [];
+    const processed = [];
 
     const indexById = Object.create(null);
 
@@ -20,6 +21,7 @@ export function computeBuckets(contracts = []) {
         if (wf?.state === STATES.CALLS)           { calls.push({ ...c, ...wf }); continue; }
         if (wf?.state === STATES.EXAMINER)        { examiner.push({ ...c, ...wf }); continue; }
         if (wf?.state === STATES.DECLINED)        { declined.push({ ...c, ...wf }); continue; }
+        if (wf?.state === STATES.PROCESSED)       { processed.push({ ...c, ...wf }); continue; }
 
         if (c.actionConseiller === 'TRAITER') {
             toCreate.push(c);
@@ -30,5 +32,5 @@ export function computeBuckets(contracts = []) {
         }
     }
 
-    return { toCreate, blocked, calls, examiner, declined };
+    return { toCreate, blocked, calls, examiner, declined, processed };
 }

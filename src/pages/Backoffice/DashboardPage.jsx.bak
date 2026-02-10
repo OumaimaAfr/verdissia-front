@@ -6,6 +6,7 @@ import {
 } from 'recharts';
 import useBackofficeBuckets from '../../hooks/useBackofficeBuckets.js';
 import dayjs from 'dayjs';
+import { getMap } from '../../utils/workflowStore.js';
 import ProcessingTimeChart from '../../components/ProcessingTimeChart.jsx';
 
 function PieSideLegend({ data }) {
@@ -38,7 +39,7 @@ function PieSideLegend({ data }) {
 }
 
 export default function DashboardPage() {
-    const { toCreate, blocked, calls, examiner, declined, processed, totals } = useBackofficeBuckets();
+    const { toCreate, blocked, calls, examiner, declined, totals } = useBackofficeBuckets();
 
     const PIE_COLORS = {
         toCreate:  '#52c41a',
@@ -46,7 +47,6 @@ export default function DashboardPage() {
         toExamine: '#1677ff',
         toCall:    '#722ed1',
         declined:  '#ff4d4f',
-        processed: '#13c2c2',
     };
 
     const makePieData = (totals) => ([
@@ -55,13 +55,12 @@ export default function DashboardPage() {
         { key: 'toExamine', name: 'Cas à examiner',    value: totals.toExamine, color: PIE_COLORS.toExamine },
         { key: 'toCall',    name: 'Clients à appeler', value: totals.toCall,    color: PIE_COLORS.toCall    },
         { key: 'declined',  name: 'Cas déclinés',      value: totals.declined,  color: PIE_COLORS.declined  },
-        { key: 'processed', name: 'Contrats traités',  value: totals.processed, color: PIE_COLORS.processed  },
     ]);
 
     const pieData = makePieData(totals);
 
     const decisionCount = {};
-    [...toCreate, ...blocked, ...calls, ...examiner, ...declined, ...processed].forEach(c => {
+    [...toCreate, ...blocked, ...calls, ...examiner, ...declined].forEach(c => {
         decisionCount[c.decision] = (decisionCount[c.decision] || 0) + 1;
     });
 
@@ -71,7 +70,7 @@ export default function DashboardPage() {
     }));
 
     const energyCount = {};
-    [...toCreate, ...blocked, ...calls, ...examiner, ...declined, ...processed].forEach(c => {
+    [...toCreate, ...blocked, ...calls, ...examiner, ...declined].forEach(c => {
         energyCount[c.typeEnergie] = (energyCount[c.typeEnergie] || 0) + 1;
     });
 
@@ -81,7 +80,7 @@ export default function DashboardPage() {
     }));
 
     const byDate = {};
-    [...toCreate, ...blocked, ...calls, ...examiner, ...declined, ...processed].forEach(c => {
+    [...toCreate, ...blocked, ...calls, ...examiner, ...declined].forEach(c => {
         const d = dayjs(c.dateMiseEnService).format('YYYY-MM-DD');
         byDate[d] = (byDate[d] || 0) + 1;
     });
@@ -126,7 +125,7 @@ export default function DashboardPage() {
                     </Card>
                 </Col>
                 <Col xs={24} md={12}>
-                    <Card title="Répartition par type d'énergie">
+                    <Card title="Répartition par type d’énergie">
                         <BarChart width={400} height={300} data={energyData}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="type" />
@@ -146,11 +145,6 @@ export default function DashboardPage() {
                             <Line type="monotone" dataKey="count" stroke="#fa8c16" strokeWidth={2} />
                         </LineChart>
                     </Card>
-                </Col>
-            </Row>
-            <Row gutter={[16, 16]}>
-                <Col xs={24} md={12}>
-                    <ProcessingTimeChart contracts={[...toCreate, ...blocked, ...calls, ...examiner, ...declined, ...processed]} />
                 </Col>
             </Row>
         </div>

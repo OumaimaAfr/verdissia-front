@@ -6,7 +6,8 @@ import {
     CloseCircleOutlined,
     ExclamationCircleOutlined,
     FileSearchOutlined,
-    PhoneOutlined
+    PhoneOutlined,
+    CheckSquareOutlined
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -52,6 +53,11 @@ function BackofficeSidebar() {
                         key: '/backoffice/declined',
                         icon: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />,
                         label: <Link to="/backoffice/declined">Cas déclinés</Link>,
+                    },
+                    {
+                        key: '/backoffice/processed',
+                        icon: <CheckSquareOutlined style={{ color: '#52c41a' }} />,
+                        label: <Link to="/backoffice/processed">Contrats traités</Link>,
                     },
                 ]}
             />

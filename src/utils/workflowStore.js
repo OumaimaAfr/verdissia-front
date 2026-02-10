@@ -5,6 +5,7 @@ export const STATES = {
     DECLINED: 'declined',
     EXAMINER: 'examiner',
     TO_CREATE: 'toCreate',
+    PROCESSED: 'processed',
 };
 
 export function getMap() {
@@ -20,7 +21,16 @@ export function setMap(map) {
 export function setState(id, state, patch = {}) {
     const map = getMap();
     const prev = map[id] || {};
-    map[id] = { ...prev, state, ...patch, id };
+    const now = new Date().toISOString();
+    map[id] = { 
+        ...prev, 
+        state, 
+        ...patch, 
+        id,
+        updatedAt: now,
+        // Always set createdAt if it doesn't exist, regardless of state
+        ...(!prev.createdAt && { createdAt: now })
+    };
     setMap(map);
     return map;
 }

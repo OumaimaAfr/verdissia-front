@@ -21,7 +21,7 @@ export default function useBackofficeBuckets() {
 
     const mapSnapshot = useMemo(() => getMap(), [version, contracts]);
 
-    const { toCreate, blocked, calls, examiner, declined } = useMemo(
+    const { toCreate, blocked, calls, examiner, declined, processed } = useMemo(
         () => computeBuckets(contracts),
         [contracts, mapSnapshot, version]
     );
@@ -32,7 +32,8 @@ export default function useBackofficeBuckets() {
         toCall: calls.length,
         declined: declined.length,
         toExamine: examiner.length,
-    }), [toCreate.length, blocked.length, calls.length, declined.length, examiner.length]);
+        processed: processed.length,
+    }), [toCreate.length, blocked.length, calls.length, declined.length, examiner.length, processed.length]);
 
-    return { toCreate, blocked, calls, examiner, declined, totals, refresh };
+    return { toCreate, blocked, calls, examiner, declined, processed, totals, refresh };
 }
