@@ -14,7 +14,7 @@ function BackofficeHeader() {
     const isDashboard = pathname === '/backoffice/dashboard';
     const [notifications, setNotifications] = useState([]);
 
-    const headerHeight = isDashboard ? 64 : 56;
+    const headerHeight = 64;
 
     // Check for upcoming callbacks every minute
     useEffect(() => {
@@ -82,7 +82,7 @@ function BackofficeHeader() {
         },
     ];
 
-    const headerStyle = isDashboard ? {
+    const headerStyle = {
         background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
         padding: '0 24px',
         borderBottom: 'none',
@@ -93,35 +93,18 @@ function BackofficeHeader() {
         height: headerHeight,
         display: 'flex',
         alignItems: 'center'
-    } : {
-        background: '#ffffff',
-        padding: '0 16px',
-        borderBottom: '1px solid #f0f0f0',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 1000,
-        height: headerHeight,
-        display: 'flex',
-        alignItems: 'center'
     };
 
-    const titleStyle = isDashboard ? {
+    const titleStyle = {
         fontSize: '20px', 
         color: 'white',
         fontWeight: '600',
         letterSpacing: '0.5px',
         lineHeight: 1.15,
         display: 'block'
-    } : {
-        fontSize: '20px', 
-        color: '#1f2937',
-        fontWeight: '600',
-        lineHeight: 1.15,
-        display: 'block'
     };
 
-    const iconContainerStyle = isDashboard ? {
+    const iconContainerStyle = {
         width: '40px',
         height: '40px',
         background: 'rgba(255, 255, 255, 0.2)',
@@ -130,49 +113,27 @@ function BackofficeHeader() {
         alignItems: 'center',
         justifyContent: 'center',
         backdropFilter: 'blur(10px)'
-    } : {
-        width: '36px',
-        height: '36px',
-        background: '#f8fafc',
-        borderRadius: '8px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
     };
 
-    const iconStyle = isDashboard ? {
+    const iconStyle = {
         width: '24px',
         height: '24px',
         color: 'white'
-    } : {
-        width: '24px',
-        height: '24px',
-        color: '#10b981'
     };
 
-    const userAvatarStyle = isDashboard ? {
+    const userAvatarStyle = {
         background: 'rgba(255, 255, 255, 0.2)',
         border: '2px solid rgba(255, 255, 255, 0.3)'
-    } : {
-        background: '#10b981',
-        border: '2px solid #ffffff'
     };
 
-    const userNameStyle = isDashboard ? {
+    const userNameStyle = {
         color: 'white', 
         fontSize: '14px',
         fontWeight: '500'
-    } : {
-        color: '#1f2937', 
-        fontSize: '14px',
-        fontWeight: '500'
     };
 
-    const notificationIconStyle = isDashboard ? {
+    const notificationIconStyle = {
         color: 'white',
-        fontSize: '18px'
-    } : {
-        color: '#10b981',
         fontSize: '18px'
     };
 
@@ -186,11 +147,7 @@ function BackofficeHeader() {
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <div style={iconContainerStyle}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={iconStyle}>
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                            <line x1="9" y1="9" x2="15" y2="9"/>
-                            <line x1="9" y1="15" x2="15" y2="15"/>
-                        </svg>
+                        <img src="/assets/images/logo-mini.png" alt="Logo" />
                     </div>
                     <div>
                         <strong style={titleStyle}>
@@ -314,7 +271,7 @@ function BackofficeHeader() {
 
             <style jsx>{`
                 .user-dropdown:hover {
-                    background: ${isDashboard ? 'rgba(255, 255, 255, 0.1)' : '#f8fafc'} !important;
+                    background: rgba(255, 255, 255, 0.1) !important;
                 }
             `}</style>
         </Header>

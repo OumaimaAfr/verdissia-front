@@ -17,8 +17,7 @@ function BackofficeSidebar() {
     const selectedKeys = [
         pathname === '/backoffice' ? '/backoffice' : pathname
     ];
-    const isDashboard = pathname === '/backoffice/dashboard';
-    const headerHeight = isDashboard ? 64 : 56;
+    const headerHeight = 64;
 
     const menuItems = [
         {
@@ -58,18 +57,10 @@ function BackofficeSidebar() {
         },
     ];
 
-    const siderStyle = isDashboard ? {
+    const siderStyle = {
         background: '#fff',
         borderRight: '1px solid #f0f0f0',
         boxShadow: '2px 0 8px rgba(0,0,0,0.06)',
-        position: 'sticky',
-        top: `${headerHeight}px`,
-        height: `calc(100vh - ${headerHeight}px)`,
-        overflow: 'auto'
-    } : {
-        background: '#fff',
-        borderRight: '1px solid #f0f0f0',
-        width: 220,
         position: 'sticky',
         top: `${headerHeight}px`,
         height: `calc(100vh - ${headerHeight}px)`,
@@ -78,19 +69,19 @@ function BackofficeSidebar() {
 
     const menuIconStyle = (item) => ({
         position: 'relative',
-        color: selectedKeys.includes(item.key) ? (isDashboard ? '#10b981' : '#1890ff') : '#6b7280'
+        color: selectedKeys.includes(item.key) ? '#10b981': '#6b7280'
     });
 
     const menuItemStyle = (item) => ({
         margin: '4px 8px',
         borderRadius: '8px',
         border: 'none',
-        backgroundColor: selectedKeys.includes(item.key) ? (isDashboard ? '#f0fdf4' : '#e6f7ff') : 'transparent',
-        color: selectedKeys.includes(item.key) ? (isDashboard ? '#10b981' : '#1890ff') : '#374151',
+        backgroundColor: selectedKeys.includes(item.key) ? '#f0fdf4' : 'transparent',
+        color: selectedKeys.includes(item.key) ? '#10b981' : '#374151',
         fontWeight: selectedKeys.includes(item.key) ? '600' : '400'
     });
 
-    const helpSectionStyle = isDashboard ? {
+    const helpSectionStyle = {
         position: 'absolute',
         bottom: '16px',
         left: '16px',
@@ -100,11 +91,11 @@ function BackofficeSidebar() {
         borderRadius: '12px',
         color: 'white',
         textAlign: 'center'
-    } : null;
+    };
 
     return (
         <Sider 
-            width={isDashboard ? 260 : 220} 
+            width={260}
             style={siderStyle}
         >
             <Menu
@@ -125,25 +116,14 @@ function BackofficeSidebar() {
                     style: menuItemStyle(item)
                 }))}
             />
-
-            {isDashboard && (
-                <div style={helpSectionStyle}>
-                    <div style={{
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        marginBottom: '4px'
-                    }}>
-                        Besoin d'aide ?
-                    </div>
-                    <div style={{
-                        fontSize: '11px',
-                        opacity: 0.9,
-                        lineHeight: '1.4'
-                    }}>
-                        Consultez notre documentation ou contactez le support technique
-                    </div>
+            <div style={helpSectionStyle}>
+                <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px'}}>
+                    Besoin d'aide ?
                 </div>
-            )}
+                <div style={{ fontSize: '11px', opacity: 0.9, lineHeight: '1.4'}}>
+                    Consultez notre documentation ou contactez le support technique
+                </div>
+            </div>
         </Sider>
     );
 }

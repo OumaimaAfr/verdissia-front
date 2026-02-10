@@ -113,10 +113,4 @@ export function openAndDownloadContract(record, options = {}) {
     link.download = fileName;
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 10000);
-
-    // Mettre à jour l'état du contrat vers "PROCESSED" après génération du PDF
-    setWorkflowState(numeroContrat, STATES.PROCESSED, {
-        contractGeneratedAt: dayjs().toISOString(),
-        contractFileName: fileName
-    });
 }

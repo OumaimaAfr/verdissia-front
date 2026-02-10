@@ -20,6 +20,7 @@ import CreatePage from "./pages/Backoffice/CreatePage.jsx";
 function RootLayout() {
     const { pathname } = useLocation();
     const isBackoffice = pathname.startsWith('/backoffice');
+    const isBackofficeLogin = pathname === '/backoffice/login';
 
     return (
         <>
@@ -27,7 +28,7 @@ function RootLayout() {
             <main id="main" role="main" tabIndex={-1}>
                 <Outlet />
             </main>
-            <Footer />
+            {(!isBackoffice || isBackofficeLogin) && <Footer />}
         </>
     );
 }

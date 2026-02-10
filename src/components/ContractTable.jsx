@@ -72,6 +72,13 @@ export default function ContractTable({
 
     const moveToExaminer = (record) => {
         setWorkflowState(record.numeroContrat, STATES.EXAMINER, { movedAt: dayjs().toISOString() });
+        message.success('Ajouté à "Cas à examiner"');
+        onChangedList?.();
+    };
+
+    const moveToProcessed = (record) => {
+        setWorkflowState(record.numeroContrat, STATES.PROCESSED, { contractGeneratedAt: dayjs().toISOString() });
+        message.success('Ajouté à "Contrats traités"');
         onChangedList?.();
     };
 
@@ -214,8 +221,7 @@ export default function ContractTable({
     const actionsWrap = (children) => {
         if (isBackofficeListPage) {
             return <div className="bo-actions-wrap" style={{ 
-                display: 'flex', 
-                justifyContent: 'flex-end',
+                display: 'flex',
                 width: '100%',
                 textAlign: 'right'
             }}>{children}</div>;
@@ -342,7 +348,7 @@ export default function ContractTable({
                             </Button>
                             <Button
                                 icon={<FilePdfOutlined />}
-                                onClick={() => openAndDownloadContract(record)}
+                                onClick={() => moveToProcessed(record)}
                                 {...getActionBtnProps('success')}
                             >
                                 Créer contrat

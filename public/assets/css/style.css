@@ -1825,15 +1825,6 @@ button[type="submit"] {
         font-size: 16px;
       }
     }
-
-    .ant-menu-item-selected {
-      background: #1677ff;
-      color: white;
-
-      .anticon-close-circle {
-        color: white !important;
-      }
-    }
   }
 
   .ant-layout-content {
@@ -1843,7 +1834,6 @@ button[type="submit"] {
 
     .ant-card {
       background: #D0F8CC;
-      border: 1px solid #2A3D29;
 
       .ant-statistic-title{
         font-weight: 700;
@@ -1907,4 +1897,48 @@ button[type="submit"] {
     justify-content: center;
     align-items: center;
   }
+}
+
+.recharts-wrapper {
+    place-self: center;
+}
+
+.ant-input-search {
+    border: 1px solid #2A3D29;
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar {
+  width: 8px;                  /* Slim & modern */
+}
+
+/* Track (background of scrollbar) */
+::-webkit-scrollbar-track {
+  background: transparent;     /* Clean look */
+  margin: 4px;                 /* Creates floating effect */
+}
+
+/* Scroll thumb */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #2ecc71, #1fa85b);
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(46, 204, 113, 0.4); /* Soft glow */
+  transition: all 0.3s ease;
+}
+
+/* Hover effect (premium feel) */
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #27ae60, #1e8449);
+  box-shadow: 0 0 14px rgba(39, 174, 96, 0.6);
+}
+
+/* No arrows (modern browsers already hide them but this ensures it) */
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Firefox support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2ecc71 transparent;
 }

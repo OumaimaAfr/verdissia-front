@@ -9,7 +9,7 @@ const { Content } = Layout;
 function BackofficeLayout() {
     const { pathname } = useLocation();
     const isDashboard = pathname === '/backoffice/dashboard';
-    const headerHeight = isDashboard ? 64 : 56;
+    const headerHeight = 64;
 
     const layoutStyle = isDashboard ? {
         minHeight: '100vh',
@@ -19,14 +19,9 @@ function BackofficeLayout() {
         background: '#ffffff'
     };
 
-    const contentStyle = isDashboard ? {
-        padding: '24px',
-        background: '#f8fafc',
-        minHeight: `calc(100vh - ${headerHeight}px)`,
-        overflow: 'auto'
-    } : {
+    const contentStyle = {
         padding: '16px',
-        background: '#ffffff',
+        background: '#f8fafc',
         minHeight: `calc(100vh - ${headerHeight}px)`,
         overflow: 'auto'
     };

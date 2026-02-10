@@ -1,3 +1,4 @@
+import React from "react";
 import { Row, Col, Card, Statistic } from 'antd';
 import {
     PieChart, Pie, Cell,
@@ -69,7 +70,7 @@ function StatsCard({ title, value, icon, color, onClick }) {
             style={{
                 borderRadius: '12px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                border: 'none',
+                border: '1px solid rgb(5, 150, 105);',
                 background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
                 transition: 'all 0.3s ease',
                 cursor: 'pointer'
@@ -124,7 +125,11 @@ function StatsCard({ title, value, icon, color, onClick }) {
 
 export default function DashboardPage() {
     const { toCreate, blocked, calls, examiner, declined, processed, totals } = useBackofficeBuckets();
-    
+
+    React.useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, []);
+
     // Gestion des clics sur les cartes
     const handleCardClick = (cardType) => {
         // Rediriger vers la page appropriée selon le type de carte
@@ -349,15 +354,6 @@ export default function DashboardPage() {
                         onClick={() => handleCardClick('Cas déclinés')}
                     />
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
-                    <StatsCard
-                        title="Gain d'efficacité LLM"
-                        value={`${llmEfficiencyGain}%`}
-                        icon={<CheckCircleOutlined style={{ color: 'white', fontSize: '20px' }} />}
-                        color="linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
-                        onClick={() => handleCardClick('Gain d\'efficacité LLM')}
-                    />
-                </Col>
             </Row>
 
             {/* Charts */}
@@ -367,8 +363,8 @@ export default function DashboardPage() {
                         title="Répartition des cas" 
                         style={{
                             borderRadius: '12px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                            border: 'none'
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                            border: '1px solid rgb(5, 150, 105)'
                         }}
                         headStyle={{
                             background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
@@ -401,8 +397,8 @@ export default function DashboardPage() {
                         title="Décisions IA" 
                         style={{
                             borderRadius: '12px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                            border: 'none'
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                            border: '1px solid rgb(5, 150, 105)'
                         }}
                         headStyle={{
                             background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
@@ -431,8 +427,8 @@ export default function DashboardPage() {
                         title="Temps de traitement des contrats" 
                                                 style={{
                             borderRadius: '12px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                            border: 'none'
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                            border: '1px solid rgb(5, 150, 105)'
                         }}
                         headStyle={{
                             background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
@@ -541,9 +537,9 @@ export default function DashboardPage() {
                         title="Décomposition processus manuel vs LLM" 
                         style={{
                             borderRadius: '12px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                            border: 'none',
-                            height: '580px' // Hauteur fixe pour correspondre au graphique
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                            border: '1px solid rgb(5, 150, 105)',
+                            height: '-webkit-fill-available' // Hauteur fixe pour correspondre au graphique
                         }}
                         headStyle={{
                             background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
@@ -584,13 +580,7 @@ export default function DashboardPage() {
                                         <span>• Signature</span>
                                         <span style={{ fontWeight: '600' }}>{manualProcessSteps.signature}min</span>
                                     </div>
-                                    <div style={{ 
-                                        display: 'flex', 
-                                        justifyContent: 'space-between', 
-                                        marginTop: '20px',
-                                        paddingTop: '12px',
-                                        borderTop: '1px solid #e5e7eb'
-                                    }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                                         <span>• Overhead humain</span>
                                         <span style={{ fontWeight: '600', color: '#991b1b' }}>+{Math.round(humanOverhead.total * 100)}%</span>
                                     </div>
@@ -625,13 +615,7 @@ export default function DashboardPage() {
                                         <span>• Pas d'erreurs</span>
                                         <span style={{ fontWeight: '600', color: '#166534' }}>0%</span>
                                     </div>
-                                    <div style={{ 
-                                        display: 'flex', 
-                                        justifyContent: 'space-between', 
-                                        marginTop: '20px',
-                                        paddingTop: '12px',
-                                        borderTop: '1px solid #e5e7eb'
-                                    }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                                         <span>• Temps économisé</span>
                                         <span style={{ fontWeight: '600', color: '#166534' }}>{formatTime(timeSavedPerContract)}/contrat</span>
                                     </div>
@@ -641,15 +625,15 @@ export default function DashboardPage() {
                         <div style={{ 
                             marginTop: '30px',
                             padding: '20px',
-                            background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                            background: 'rgb(248, 250, 252)',
                             borderRadius: '8px',
                             border: '1px solid #bbf7d0',
                             textAlign: 'center'
                         }}>
-                            <div style={{ fontSize: '18px', fontWeight: '700', color: '#166534', marginBottom: '10px' }}>
+                            <div style={{ fontSize: '18px', fontWeight: '700', color: 'rgb(107, 114, 128)', marginBottom: '10px' }}>
                                 🚀 Gain d'efficacité: {llmEfficiencyGain}%
                             </div>
-                            <div style={{ fontSize: '15px', color: '#166534' }}>
+                            <div style={{ fontSize: '15px', color: 'rgb(107, 114, 128)' }}>
                                 Le processus LLM est {speedFactor}x plus rapide que le processus manuel
                             </div>
                         </div>
@@ -660,8 +644,8 @@ export default function DashboardPage() {
                         title="Répartition par type d'énergie" 
                         style={{
                             borderRadius: '12px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                            border: 'none'
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                            border: '1px solid rgb(5, 150, 105)'
                         }}
                         headStyle={{
                             background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
@@ -690,8 +674,8 @@ export default function DashboardPage() {
                         title="Volume par date de mise en service" 
                         style={{
                             borderRadius: '12px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                            border: 'none'
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                            border: '1px solid rgb(5, 150, 105)'
                         }}
                         headStyle={{
                             background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
