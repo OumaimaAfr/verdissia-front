@@ -235,6 +235,34 @@ export default function ContractTable({
             if (nextAction === 'callback_later' && callbackDateTime) {
                 updateData.callbackDateTime = callbackDateTime.toISOString();
                 updateData.notifications = 'Rappel prévu';
+                
+                // Sauvegarder également dans localStorage pour la pop-up
+                try {
+                    const reminderData = {
+                        contractId: callResultTarget.numeroContrat,
+                        reminderTime: callbackDateTime.toISOString(),
+                        contractInfo: {
+                            prenom: callResultTarget.prenom,
+                            nom: callResultTarget.nom,
+                            civilite: callResultTarget.civilite,
+                            numeroContrat: callResultTarget.numeroContrat
+                        },
+                        section: {
+                            name: 'Appels',
+                            path: '/backoffice/calls',
+                            color: '#f59e0b'
+                        },
+                        createdAt: dayjs().toISOString()
+                    };
+                    
+                    const existingReminders = JSON.parse(localStorage.getItem('contractReminders') || '[]');
+                    existingReminders.push(reminderData);
+                    localStorage.setItem('contractReminders', JSON.stringify(existingReminders));
+                    
+                    console.log('✅ Rappel sauvegardé dans localStorage:', reminderData);
+                } catch (error) {
+                    console.error('❌ Erreur sauvegarde localStorage:', error);
+                }
             }
             
             setWorkflowState(callResultTarget.numeroContrat, STATES.CALLS, updateData);
